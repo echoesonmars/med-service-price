@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { FaMapMarkerAlt, FaHistory, FaTrash } from "react-icons/fa";
 import {
   DropdownMenu,
@@ -156,13 +155,11 @@ export function Header({ onSearchTrigger, searchHistory, onClearHistory }: Heade
 
         {/* Search History Dropdown */}
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              className="size-9 rounded-full border border-border bg-background hover:bg-zinc-100 dark:hover:bg-zinc-800 text-foreground flex items-center justify-center cursor-pointer transition-colors shadow-sm outline-none"
-              title="История поиска"
-            >
-              <FaHistory className="size-3.5 text-foreground/75" />
-            </button>
+          <DropdownMenuTrigger
+            className="size-9 rounded-full border border-border bg-background hover:bg-zinc-100 dark:hover:bg-zinc-800 text-foreground flex items-center justify-center cursor-pointer transition-colors shadow-sm outline-none"
+            title="История поиска"
+          >
+            <FaHistory className="size-3.5 text-foreground/75" />
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-56 bg-background border border-border rounded-xl shadow-lg p-1.5 z-[100]">
