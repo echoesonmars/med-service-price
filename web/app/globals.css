@@ -147,13 +147,16 @@
     @apply font-sans;
     font-family: var(--font-geist-sans), sans-serif;
   }
-  h1, h2, h3, h4, h5, h6, .font-heading, .font-accent {
+  h1, h2, h3, h4, h5, h6, .font-heading, .font-accent, .font-bold, .font-semibold, .font-extrabold {
     font-family: var(--font-didact-gothic), sans-serif;
   }
 }
-
 @keyframes shimmer {
   100% {
     transform: translateX(100%);
   }
+}
+
+.font-didact {
+  font-family: var(--font-didact-gothic), sans-serif !important;
 }
