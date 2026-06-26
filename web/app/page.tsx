@@ -7,7 +7,8 @@ import { SearchSkeletons } from "@/components/search-skeletons";
 import { ServiceCard } from "@/components/service-card";
 import { ServiceItem } from "@/types/search";
 import { FaArrowLeft } from "react-icons/fa";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Header } from "@/components/header";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 
@@ -63,15 +64,42 @@ export default function Home() {
   const [searchState, setSearchState] = useState<"idle" | "searching" | "done">("idle");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+
+  // Load search history from localStorage on client side mount
+  useEffect(() => {
+    const saved = localStorage.getItem("med_search_history");
+    if (saved) {
+      try {
+        setSearchHistory(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse search history:", e);
+      }
+    }
+  }, []);
+
+  const saveHistory = (newList: string[]) => {
+    setSearchHistory(newList);
+    localStorage.setItem("med_search_history", JSON.stringify(newList));
+  };
 
   const triggerSearch = (queryText: string) => {
     setSearchQuery(queryText);
     setSearchState("searching");
 
+    // Add to history (deduplicate and keep max 8)
+    const filtered = searchHistory.filter((item) => item !== queryText);
+    const updatedHistory = [queryText, ...filtered].slice(0, 8);
+    saveHistory(updatedHistory);
+
     // Simulate search results loading for 2.5 seconds
     setTimeout(() => {
       setSearchState("done");
     }, 2500);
+  };
+
+  const clearHistory = () => {
+    saveHistory([]);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,9 +122,14 @@ export default function Home() {
     <main
       className={cn(
         "flex min-h-screen flex-col items-center p-6 bg-background relative overflow-hidden selection:bg-accent selection:text-accent-foreground",
-        searchState === "idle" ? "justify-center" : "justify-start pt-12 sm:pt-16"
+        searchState === "idle" ? "justify-center" : "justify-start pt-20 sm:pt-24"
       )}
     >
+      <Header
+        onSearchTrigger={triggerSearch}
+        searchHistory={searchHistory}
+        onClearHistory={clearHistory}
+      />
       {/* Decorative clean radial background gradients for high-end feel */}
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-accent/10 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-accent/10 blur-[120px] pointer-events-none" />
