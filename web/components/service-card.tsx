@@ -80,7 +80,7 @@ export function ServiceCard({ item, index }: ServiceCardProps) {
         <Button
           size="default"
           variant="outline"
-          className="bg-background border-transparent shadow-[0_4px_12px_rgba(56,189,248,0.2)] hover:shadow-[0_6px_20px_rgba(56,189,248,0.35)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 font-heading font-bold text-xs py-2 px-5 h-10 cursor-pointer flex items-center gap-1.5"
+          className="bg-background border-transparent shadow-[0_4px_12px_rgba(56,189,248,0.2)] hover:shadow-[0_6px_20px_rgba(56,189,248,0.35)] transition-all duration-300 text-xs py-2 px-5 h-10 cursor-pointer flex items-center gap-1.5"
         >
           <span>Записаться</span>
           <FaChevronRight className="size-2 text-foreground/70" />
