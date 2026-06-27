@@ -9,4 +9,6 @@ export interface ServiceItem {
   rating: string;
   reviewsCount: string;
   badge: string;
+  lat?: number;
+  lng?: number;
 }
