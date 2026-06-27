@@ -30,22 +30,28 @@ export function PlaceholdersAndVanishInput({
   onSubmit,
   value: controlledValue,
   setValue: setControlledValue,
+  selectedType: controlledType,
+  onTypeChange,
 }: {
   placeholders: string[];
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSubmit?: (e: React.FormEvent<HTMLFormElement>) => void;
   value?: string;
   setValue?: (val: string) => void;
+  selectedType?: string;
+  onTypeChange?: (type: string) => void;
 }) {
   const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
-  const [selectedType, setSelectedType] = useState("Мед услуги");
+  const [localType, setLocalType] = useState("Мед услуги");
+  const selectedType = controlledType !== undefined ? controlledType : localType;
+  const setSelectedType = onTypeChange !== undefined ? onTypeChange : setLocalType;
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const types = ["Аптеки", "Лекарства", "Мед центры", "Врачи", "Мед услуги"];
+  const types = ["Аптеки", "Лекарства", "Мед центры", "Врачи", "Мед услуги", "ИИ-Ассистент"];
 
   useEffect(() => {
     const startAnimation = () => {

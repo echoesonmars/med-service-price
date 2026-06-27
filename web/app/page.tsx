@@ -1,86 +1,209 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { PlaceholdersAndVanishInput } from "@/components/ui/placeholders-and-vanish-input";
 import { SearchFilters } from "@/components/search-filters";
 import { PopularCategories } from "@/components/popular-categories";
 import { SearchSkeletons } from "@/components/search-skeletons";
 import { ServiceCard } from "@/components/service-card";
 import { ServiceItem } from "@/types/search";
-import { FaArrowLeft } from "react-icons/fa";
-import { useState, useEffect } from "react";
+import { FaArrowLeft, FaList, FaMap } from "react-icons/fa";
 import { Header } from "@/components/header";
+import { AIChat } from "@/components/ai-chat";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 
+// Cookie helper functions
+const getCookie = (name: string): string | null => {
+  if (typeof document === "undefined") return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return decodeURIComponent(parts.pop()?.split(";").shift() || "");
+  return null;
+};
+
+const setCookie = (name: string, value: string, days = 365) => {
+  if (typeof document === "undefined") return;
+  const date = new Date();
+  date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+  const expires = `; expires=${date.toUTCString()}`;
+  document.cookie = `${name}=${encodeURIComponent(value)}${expires}; path=/; SameSite=Lax`;
+};
+
+// Dynamically import map component to avoid SSR errors
+const ClinicMap = dynamic(() => import("@/components/clinic-map"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-900 border-l border-border">
+      <div className="flex flex-col items-center gap-3">
+        <div className="relative w-8 h-8">
+          <div className="absolute inset-0 rounded-full border-2 border-accent/20" />
+          <div className="absolute inset-0 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+        </div>
+        <span className="text-xs font-heading font-semibold text-muted-foreground">
+          Загрузка интерактивной карты...
+        </span>
+      </div>
+    </div>
+  ),
+});
+
+const mockResults: ServiceItem[] = [
+  {
+    title: "МРТ головного мозга с контрастированием",
+    price: "28 000 ₸",
+    oldPrice: "35 000 ₸",
+    clinic: "Медицинский центр «Сункар»",
+    address: "мкр. Нурсат, д. 23",
+    metro: "мкр. Нурсат",
+    distance: "1.2 км",
+    rating: "4.8",
+    reviewsCount: "142 отзыва",
+    badge: "Мед услуги",
+    lat: 42.3601,
+    lng: 69.6105,
+  },
+  {
+    title: "МРТ головного мозга (обзорное)",
+    price: "18 000 ₸",
+    oldPrice: "22 500 ₸",
+    clinic: "Диагностический центр «Орда»",
+    address: "ул. Бауыржана Момышулы, д. 14",
+    metro: "Аль-Фарабийский р-н",
+    distance: "0.8 км",
+    rating: "4.9",
+    reviewsCount: "89 отзывов",
+    badge: "Мед услуги",
+    lat: 42.3156,
+    lng: 69.5976,
+  },
+  {
+    title: "МРТ головного мозга + сосуды",
+    price: "42 000 ₸",
+    oldPrice: "5 000 ₸",
+    clinic: "Клиника «Interteach»",
+    address: "пр. Тауке хана, д. 45",
+    metro: "Енбекшинский р-н",
+    distance: "2.4 км",
+    rating: "4.7",
+    reviewsCount: "216 отзывов",
+    badge: "Мед услуги",
+    lat: 42.3195,
+    lng: 69.6154,
+  },
+];
+
+const placeholders = [
+  "МРТ головного мозга с контрастом",
+  "УЗИ органов брюшной полости",
+  "Прием врача-терапевта",
+  "Клинический анализ крови с лейкоцитарной формулой",
+  "Консультация врача-кардиолога",
+  "Компьютерная томография (КТ) легких",
+];
+
+const aiPlaceholders = [
+  "Опишите ваши симптомы (например, болит спина)...",
+  "Сильная головная боль и головокружение",
+  "Какого врача пройти при хронической усталости?",
+  "Болит ухо и заложило нос",
+];
+
 export default function Home() {
-  const placeholders = [
-    "МРТ головного мозга с контрастом",
-    "УЗИ органов брюшной полости",
-    "Прием врача-терапевта",
-    "Клинический анализ крови с лейкоцитарной формулой",
-    "Консультация врача-кардиолога",
-    "Компьютерная томография (КТ) легких"
-  ];
-
-  const mockResults: ServiceItem[] = [
-    {
-      title: "МРТ головного мозга с контрастированием",
-      price: "8 400 ₽",
-      oldPrice: "10 500 ₽",
-      clinic: "Клиника «Медика Сити»",
-      address: "ул. Ленина, д. 45",
-      metro: "Петроградская",
-      distance: "1.2 км",
-      rating: "4.8",
-      reviewsCount: "142 отзыва",
-      badge: "Мед услуги",
-    },
-    {
-      title: "МРТ головного мозга (обзорное)",
-      price: "4 200 ₽",
-      oldPrice: "5 500 ₽",
-      clinic: "Медицинский центр «Скандинавия»",
-      address: "пр. Мира, д. 12",
-      metro: "Проспект Мира",
-      distance: "0.8 км",
-      rating: "4.9",
-      reviewsCount: "89 отзывов",
-      badge: "Мед услуги",
-    },
-    {
-      title: "МРТ головного мозга + сосуды",
-      price: "11 000 ₽",
-      oldPrice: "13 200 ₽",
-      clinic: "Центр диагностики «Энерго»",
-      address: "Киевская ул., д. 8",
-      metro: "Фрунзенская",
-      distance: "2.4 км",
-      rating: "4.7",
-      reviewsCount: "216 отзывов",
-      badge: "Мед услуги",
-    },
-  ];
-
   const [searchState, setSearchState] = useState<"idle" | "searching" | "done">("idle");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [filteredResults, setFilteredResults] = useState<ServiceItem[]>(mockResults);
+  const [selectedClinic, setSelectedClinic] = useState<ServiceItem | null>(null);
+  const [showMobileList, setShowMobileList] = useState(false);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [searchType, setSearchType] = useState("Мед услуги");
+  const [activeMode, setActiveMode] = useState<"search" | "chat">("search");
 
-  // Load search history from localStorage on client side mount
+  // Load search history, URL query parameters, and cached geolocation on mount
   useEffect(() => {
+    let currentHistory: string[] = [];
     const saved = localStorage.getItem("med_search_history");
     if (saved) {
       try {
-        setSearchHistory(JSON.parse(saved));
+        currentHistory = JSON.parse(saved);
+        setSearchHistory(currentHistory);
       } catch (e) {
         console.error("Failed to parse search history:", e);
       }
     }
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const query = params.get("q");
+      if (query) {
+        setSearchQuery(query);
+        setSearchState("searching");
+
+        const filtered = currentHistory.filter((item) => item !== query);
+        const updatedHistory = [query, ...filtered].slice(0, 8);
+        setSearchHistory(updatedHistory);
+        localStorage.setItem("med_search_history", JSON.stringify(updatedHistory));
+
+        filterClinics(query);
+
+        setTimeout(() => {
+          setSearchState("done");
+        }, 1500);
+      }
+    }
+
+    // Load cached coordinates from cookies (default to Shymkent if empty)
+    const storedCoords = getCookie("med_user_coords");
+    if (storedCoords) {
+      try {
+        setUserCoords(JSON.parse(storedCoords));
+      } catch (e) {
+        console.error("Failed to parse stored coordinates:", e);
+      }
+    } else {
+      const defaultCoords = { lat: 42.32, lng: 69.60 };
+      setUserCoords(defaultCoords);
+      setCookie("med_user_coords", JSON.stringify(defaultCoords));
+    }
+  }, []);
+
+  // Listen to custom location update event
+  useEffect(() => {
+    const handleLocationUpdate = () => {
+      const stored = getCookie("med_user_coords");
+      if (stored) {
+        try {
+          setUserCoords(JSON.parse(stored));
+        } catch (e) {
+          console.error("Failed to parse updated coordinates:", e);
+        }
+      }
+    };
+
+    window.addEventListener("med_location_updated", handleLocationUpdate);
+    return () => {
+      window.removeEventListener("med_location_updated", handleLocationUpdate);
+    };
   }, []);
 
   const saveHistory = (newList: string[]) => {
     setSearchHistory(newList);
     localStorage.setItem("med_search_history", JSON.stringify(newList));
+  };
+
+  const filterClinics = (queryText: string) => {
+    const lowerQuery = queryText.toLowerCase();
+    const filtered = mockResults.filter(
+      (c) =>
+        c.title.toLowerCase().includes(lowerQuery) ||
+        c.clinic.toLowerCase().includes(lowerQuery) ||
+        c.metro.toLowerCase().includes(lowerQuery) ||
+        c.address.toLowerCase().includes(lowerQuery)
+    );
+    setFilteredResults(filtered);
   };
 
   const triggerSearch = (queryText: string) => {
@@ -92,10 +215,24 @@ export default function Home() {
     const updatedHistory = [queryText, ...filtered].slice(0, 8);
     saveHistory(updatedHistory);
 
-    // Simulate search results loading for 2.5 seconds
+    if (searchType === "ИИ-Ассистент") {
+      setActiveMode("chat");
+    } else {
+      setActiveMode("search");
+      filterClinics(queryText);
+    }
+
+    // Sync URL query parameter without page reload
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("q", queryText);
+      window.history.replaceState({}, "", url.toString());
+    }
+
+    // Simulate search results loading for 1.2 seconds
     setTimeout(() => {
       setSearchState("done");
-    }, 2500);
+    }, 1200);
   };
 
   const clearHistory = () => {
@@ -116,15 +253,218 @@ export default function Home() {
     setSearchQuery("");
     setSearchState("idle");
     setActiveFilter("all");
+    setFilteredResults(mockResults);
+    setSelectedClinic(null);
+    setActiveMode("search");
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("q");
+      window.history.replaceState({}, "", url.toString());
+    }
   };
 
+  // RENDER SEARCH ACTIVE/DONE SPLIT-SCREEN LAYOUT
+  if (searchState !== "idle") {
+    return (
+      <main className="w-full h-screen flex flex-col bg-background overflow-hidden relative select-none selection:bg-accent selection:text-accent-foreground pt-16">
+        {/* Header Overlay */}
+        <Header
+          onSearchTrigger={triggerSearch}
+          searchHistory={searchHistory}
+          onClearHistory={clearHistory}
+        />
+
+        {/* Main Content Layout - Split Screen based on Golden Ratio */}
+        <div className="flex-1 w-full h-full flex flex-row relative overflow-hidden">
+          
+          {/* Left Side: Sidebar with Clinics & Search */}
+          <div
+            className={cn(
+              "w-full md:w-[38.2%] flex flex-col h-full bg-background relative z-10 transition-transform duration-300 md:translate-x-0 border-r border-border shrink-0",
+              showMobileList
+                ? "translate-x-0 absolute inset-0 md:relative"
+                : "-translate-x-full absolute inset-0 md:relative hidden md:flex"
+            )}
+          >
+            {activeMode === "chat" ? (
+              <div className="flex flex-col h-full bg-background relative overflow-hidden">
+                {/* Chat Header */}
+                <div className="py-3 px-4 md:py-3.5 md:px-6 border-b border-border bg-background flex items-center gap-3">
+                  <button
+                    onClick={resetSearch}
+                    className="size-11 rounded-full border border-border bg-background hover:bg-zinc-100 flex items-center justify-center text-foreground cursor-pointer transition-colors shadow-sm outline-none shrink-0"
+                    title="Вернуться на главную"
+                  >
+                    <FaArrowLeft className="size-3.5" />
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-sm font-heading font-bold text-foreground truncate">
+                      ИИ-Ассистент
+                    </h2>
+                    <p className="text-[10px] text-muted-foreground font-heading truncate">
+                      Диагностика симптомов и подбор исследований
+                    </p>
+                  </div>
+                </div>
+
+                {/* AI Chat container */}
+                <div className="flex-1 min-h-0">
+                  <AIChat
+                    initialQuery={searchQuery}
+                    onSelectClinic={(clinic) => {
+                      setSelectedClinic(clinic);
+                      if (showMobileList) {
+                        setShowMobileList(false);
+                      }
+                    }}
+                    selectedClinic={selectedClinic}
+                    allClinics={mockResults}
+                  />
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Search container in Sidebar */}
+                <div className="p-4 md:p-6 border-b border-border bg-background space-y-4">
+                  <div className="flex items-center gap-3 w-full">
+                    <button
+                      onClick={resetSearch}
+                      className="size-11 rounded-full border border-border bg-background hover:bg-zinc-100 flex items-center justify-center text-foreground cursor-pointer transition-colors shadow-sm outline-none shrink-0"
+                      title="Вернуться на главную"
+                    >
+                      <FaArrowLeft className="size-3.5" />
+                    </button>
+                    <div className="flex-1">
+                      <PlaceholdersAndVanishInput
+                        placeholders={searchType === "ИИ-Ассистент" ? aiPlaceholders : placeholders}
+                        onChange={handleChange}
+                        onSubmit={onSubmit}
+                        value={searchQuery}
+                        setValue={setSearchQuery}
+                        selectedType={searchType}
+                        onTypeChange={setSearchType}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Filters */}
+                  <div className="w-full pt-1">
+                    <SearchFilters
+                      activeFilter={activeFilter}
+                      onFilterChange={setActiveFilter}
+                    />
+                  </div>
+                </div>
+
+                {/* Scrollable Results Container */}
+                <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 no-scrollbar bg-zinc-50/50 dark:bg-zinc-950/20">
+                  <AnimatePresence mode="wait">
+                    {searchState === "searching" ? (
+                      <motion.div
+                        key="loader"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="py-4"
+                      >
+                        <SearchSkeletons query={searchQuery} />
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="results"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="space-y-4"
+                      >
+                        <div className="flex justify-between items-center text-xs text-muted-foreground font-heading font-semibold px-1">
+                          <span>Найдено предложений: {filteredResults.length}</span>
+                          {selectedClinic && (
+                            <button
+                              onClick={() => setSelectedClinic(null)}
+                              className="text-accent hover:underline cursor-pointer"
+                            >
+                              Сбросить выбор
+                            </button>
+                          )}
+                        </div>
+
+                        {filteredResults.length === 0 ? (
+                          <div className="py-12 text-center text-sm text-muted-foreground font-heading">
+                            Ничего не найдено по этому запросу. Попробуйте изменить фильтры.
+                          </div>
+                        ) : (
+                          filteredResults.map((clinic, idx) => {
+                            const isSelected =
+                              selectedClinic &&
+                              selectedClinic.clinic === clinic.clinic &&
+                              selectedClinic.title === clinic.title;
+                            return (
+                              <div
+                                key={idx}
+                                onClick={() => {
+                                  setSelectedClinic(clinic);
+                                  if (showMobileList) {
+                                    setShowMobileList(false);
+                                  }
+                                }}
+                                className={cn(
+                                  "cursor-pointer transition-all duration-300 rounded-xl",
+                                  isSelected
+                                    ? "ring-2 ring-sky-400/60 shadow-[0_0_15px_rgba(56,189,248,0.2)]"
+                                    : ""
+                                )}
+                              >
+                                <ServiceCard item={clinic} index={idx} />
+                              </div>
+                            );
+                          })
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Right Side: Map Container */}
+          <div className="flex-1 h-full relative z-0">
+            {/* Inner White Glow Overlay */}
+            <div className="absolute inset-0 z-10 pointer-events-none shadow-[inset_0_0_80px_50px_rgba(255,255,255,1)]" />
+            <ClinicMap
+              clinics={filteredResults}
+              selectedClinic={selectedClinic}
+              onSelectClinic={setSelectedClinic}
+              userCoords={userCoords}
+            />
+          </div>
+
+          {/* Floating Mobile Toggle Button */}
+          <button
+            onClick={() => setShowMobileList(!showMobileList)}
+            className="md:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-black text-white hover:bg-zinc-900 border border-black px-4 py-2.5 rounded-full text-xs font-heading font-bold shadow-[0_6px_20px_rgba(0,0,0,0.15)] transition-all cursor-pointer outline-none"
+          >
+            {showMobileList ? (
+              <>
+                <FaMap className="size-3.5" />
+                <span>Показать карту</span>
+              </>
+            ) : (
+              <>
+                <FaList className="size-3.5" />
+                <span>Показать список ({filteredResults.length})</span>
+              </>
+            )}
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  // RENDER LANDING PAGE IDLE STATE
   return (
-    <main
-      className={cn(
-        "flex min-h-screen flex-col items-center p-6 bg-background relative overflow-hidden selection:bg-accent selection:text-accent-foreground",
-        searchState === "idle" ? "justify-center" : "justify-start pt-20 sm:pt-24"
-      )}
-    >
+    <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-background relative overflow-hidden selection:bg-accent selection:text-accent-foreground">
       <Header
         onSearchTrigger={triggerSearch}
         searchHistory={searchHistory}
@@ -140,115 +480,33 @@ export default function Home() {
         transition={{ type: "spring", stiffness: 220, damping: 28 }}
         className="max-w-2xl w-full text-left space-y-5 relative z-10"
       >
-        {/* Title and subtitle section (Animate out when searching) */}
-        <AnimatePresence>
-          {searchState === "idle" && (
-            <motion.div
-              initial={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0, marginBottom: -16, overflow: "hidden" }}
-              transition={{ duration: 0.35, ease: "easeInOut" }}
-              className="space-y-4"
-            >
-              <h1
-                style={{ fontFamily: "var(--font-didact-gothic), sans-serif" }}
-                className="text-5xl md:text-6xl font-bold text-foreground tracking-tight"
-              >
-                Что нужно проверить?
-              </h1>
-              <p className="text-md md:text-lg text-muted-foreground leading-relaxed">
-                Поиск реальных цен на медицинские услуги среди сотен клиник.
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div className="space-y-4">
+          <h1
+            style={{ fontFamily: "var(--font-didact-gothic), sans-serif" }}
+            className="text-5xl md:text-6xl font-bold text-foreground tracking-tight"
+          >
+            Что нужно проверить?
+          </h1>
+          <p className="text-md md:text-lg text-muted-foreground leading-relaxed">
+            Поиск реальных цен на медицинские услуги среди сотен клиник.
+          </p>
+        </div>
 
-        {/* Input container row (Input + Back Button when active) */}
-        <motion.div layout className="flex items-center gap-3 w-full">
-          <AnimatePresence mode="popLayout">
-            {searchState !== "idle" && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                className="shrink-0"
-              >
-                <button
-                  onClick={resetSearch}
-                  className="h-12 w-12 rounded-full border border-border bg-background hover:bg-zinc-100 dark:hover:bg-zinc-800 text-foreground flex items-center justify-center cursor-pointer transition-colors shadow-sm outline-none"
-                >
-                  <FaArrowLeft className="size-4" />
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
+        <div className="flex items-center gap-3 w-full">
           <div className="flex-1">
             <PlaceholdersAndVanishInput
-              placeholders={placeholders}
+              placeholders={searchType === "ИИ-Ассистент" ? aiPlaceholders : placeholders}
               onChange={handleChange}
               onSubmit={onSubmit}
               value={searchQuery}
               setValue={setSearchQuery}
+              selectedType={searchType}
+              onTypeChange={setSearchType}
             />
           </div>
-        </motion.div>
+        </div>
 
-        {/* Filter Pills (Visible when active) */}
-        <AnimatePresence>
-          {searchState !== "idle" && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ delay: 0.1, duration: 0.3 }}
-              className="w-full"
-            >
-              <SearchFilters activeFilter={activeFilter} onFilterChange={setActiveFilter} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Popular categories layout (Animate out when searching) */}
-        <AnimatePresence>
-          {searchState === "idle" && (
-            <motion.div
-              initial={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0, marginTop: -12, overflow: "hidden" }}
-              transition={{ duration: 0.35, ease: "easeInOut" }}
-              className="w-full"
-            >
-              <PopularCategories onSelect={triggerSearch} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Search Results & Loader section */}
-        <AnimatePresence mode="wait">
-          {searchState !== "idle" && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ delay: 0.1, duration: 0.4 }}
-              className="space-y-6 pt-2 w-full"
-            >
-              {searchState === "searching" && (
-                <SearchSkeletons query={searchQuery} />
-              )}
-
-              {searchState === "done" && (
-                <div className="space-y-4">
-                  <div className="space-y-4">
-                    {mockResults.map((item, idx) => (
-                      <ServiceCard key={idx} item={item} index={idx} />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <PopularCategories onSelect={triggerSearch} />
       </motion.div>
     </main>
   );
