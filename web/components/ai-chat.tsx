@@ -1,17 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useChat } from "@ai-sdk/react";
+import { isToolUIPart, getToolName, DefaultChatTransport } from "ai";
 import { FaMicrophone, FaPaperPlane } from "react-icons/fa";
 import { ServiceItem } from "@/types/search";
 import { ServiceCard } from "@/components/service-card";
 import { cn } from "@/lib/utils";
-
-interface Message {
-  id: string;
-  sender: "user" | "bot";
-  text: string;
-  recommendations?: ServiceItem[];
-}
 
 interface AIChatProps {
   initialQuery?: string;
@@ -20,9 +15,14 @@ interface AIChatProps {
   allClinics: ServiceItem[];
 }
 
-export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic, allClinics }: AIChatProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputVal, setInputVal] = useState("");
+export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic }: AIChatProps) {
+  const { messages, sendMessage, setMessages } = useChat({
+    transport: new DefaultChatTransport({
+      api: "/api/chat",
+    }),
+  });
+  
+  const [input, setInput] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -34,98 +34,84 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic, allC
     "Анализ крови на витамины"
   ];
 
-  // Helper to trigger assistant response
-  const triggerBotResponse = useCallback((userText: string) => {
-    const lowerText = userText.toLowerCase();
-    let botText = "Я проанализировал симптомы. Для точной диагностики рекомендуется очная консультация специалиста. Вот медицинские центры в Шымкенте широкого профиля, где вы можете пройти обследование:";
-    let recs: ServiceItem[] = [];
-
-    if (lowerText.includes("спин") || lowerText.includes("поясн")) {
-      botText = "По симптомам боли в спине рекомендуется сделать МРТ поясничного отдела позвоночника, чтобы исключить грыжи и протрузии. Вот лучшие предложения по МРТ в клиниках Шымкента:";
-      recs = allClinics.filter(c => c.title.toLowerCase().includes("поясн") || c.title.toLowerCase().includes("мрт"));
-    } else if (lowerText.includes("голов") || lowerText.includes("мозг")) {
-      botText = "При частых головных болях рекомендуется провести обзорное МРТ головного мозга. Ниже приведены диагностические центры Шымкента с наиболее выгодными ценами:";
-      recs = allClinics.filter(c => c.title.toLowerCase().includes("голов"));
-    } else if (lowerText.includes("кров") || lowerText.includes("анализ")) {
-      botText = "Для общей оценки состояния здоровья рекомендуется сдать клинический анализ крови. Вы можете сделать это в следующих лабораториях:";
-      recs = allClinics.slice(0, 2);
-    } else {
-      recs = allClinics;
-    }
-
-    setTimeout(() => {
-      setMessages(prev => [
-        ...prev,
-        {
-          id: Math.random().toString(),
-          sender: "bot",
-          text: botText,
-          recommendations: recs
-        }
-      ]);
-    }, 1000);
-  }, [allClinics]);
-
-  const handleSend = (text: string) => {
-    if (!text.trim()) return;
-
-    // Add user message
-    const userMsg: Message = {
-      id: Math.random().toString(),
-      sender: "user",
-      text: text
-    };
-
-    setMessages(prev => [...prev, userMsg]);
-    setInputVal("");
-
-    // Trigger AI reply
-    triggerBotResponse(text);
-  };
-
   // Simulate voice recording input
   const startVoiceSim = () => {
     if (isRecording) return;
     setIsRecording(true);
     setTimeout(() => {
       setIsRecording(false);
-      setInputVal("Сильная головная боль и головокружение");
+      setInput("Сильная головная боль и головокружение");
     }, 2000);
   };
 
-  // Handle initial query on mount
+  // Handle initial query on mount or programmatically
   useEffect(() => {
     if (initialQuery) {
-      const userMsg: Message = {
-        id: "initial-user",
-        sender: "user",
-        text: initialQuery
-      };
-      setMessages([userMsg]);
-      triggerBotResponse(initialQuery);
+      sendMessage({ text: initialQuery });
     } else {
       // Welcome message
       setMessages([
         {
           id: "welcome",
-          sender: "bot",
-          text: "Здравствуйте! Я ваш интеллектуальный помощник MedServicePrice. Опишите ваши симптомы или то, что вас беспокоит, и я помогу подобрать нужные медицинские исследования и покажу клиники на карте Шымкента."
+          role: "assistant",
+          parts: [
+            {
+              type: "text",
+              text: "Здравствуйте! Я ваш интеллектуальный помощник MedServicePrice. Опишите ваши симптомы или то, что вас беспокоит, и я помогу подобрать нужные медицинские исследования и покажу клиники на карте Шымкента.",
+              state: "done"
+            }
+          ]
         }
       ]);
     }
-  }, [initialQuery, triggerBotResponse]);
+  }, [initialQuery, sendMessage, setMessages]);
 
   // Scroll to bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!input.trim()) return;
+    sendMessage({ text: input });
+    setInput("");
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+  };
+
   return (
     <div className="flex flex-col h-full bg-background relative overflow-hidden">
       {/* Scrollable Message Thread */}
       <div className="flex-1 overflow-y-auto py-3 px-4 md:py-4 md:px-6 flex flex-col gap-3.5 no-scrollbar bg-zinc-50/50 dark:bg-zinc-950/20">
         {messages.map((msg) => {
-          const isBot = msg.sender === "bot";
+          const isBot = msg.role === "assistant";
+          
+          let messageText = "";
+          const recommendations: ServiceItem[] = [];
+
+          if (msg.parts) {
+            for (const part of msg.parts) {
+              if (part.type === "text") {
+                messageText += part.text;
+              } else if (isToolUIPart(part)) {
+                const toolName = getToolName(part);
+                if (
+                  toolName === "search_clinics_by_symptom" &&
+                  part.state === "output-available"
+                ) {
+                  recommendations.push(...(part.output as ServiceItem[]));
+                }
+              }
+            }
+          }
+
+          if (!messageText && recommendations.length === 0) {
+            return null;
+          }
+
           return (
             <div
               key={msg.id}
@@ -135,25 +121,27 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic, allC
               )}
             >
               {/* Message bubble */}
-              <div
-                className={cn(
-                  "py-2.5 px-4 rounded-2xl text-xs sm:text-sm font-heading leading-relaxed shadow-sm",
-                  isBot
-                    ? "bg-background border border-border text-foreground"
-                    : "bg-zinc-900 text-zinc-50 dark:bg-zinc-100 dark:text-zinc-900"
-                )}
-              >
-                {msg.text}
-              </div>
+              {messageText && (
+                <div
+                  className={cn(
+                    "py-2.5 px-4 rounded-2xl text-xs sm:text-sm font-heading leading-relaxed shadow-sm",
+                    isBot
+                      ? "bg-background border border-border text-foreground"
+                      : "bg-zinc-900 text-zinc-50 dark:bg-zinc-100 dark:text-zinc-900"
+                  )}
+                >
+                  {messageText}
+                </div>
+              )}
 
               {/* Clinic recommendations inside bubble */}
-              {isBot && msg.recommendations && msg.recommendations.length > 0 && (
+              {isBot && recommendations.length > 0 && (
                 <div className="w-full space-y-2 pt-2 animate-fade-in">
                   <div className="text-[10px] uppercase font-bold tracking-wider text-zinc-400 dark:text-zinc-500 px-1">
                     Подобрано для вас:
                   </div>
                   <div className="space-y-2">
-                    {msg.recommendations.map((clinic, idx) => {
+                    {recommendations.map((clinic, idx) => {
                       const isSelected =
                         selectedClinic &&
                         selectedClinic.clinic === clinic.clinic &&
@@ -188,7 +176,9 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic, allC
           {suggestions.map((s, idx) => (
             <button
               key={idx}
-              onClick={() => handleSend(s)}
+              onClick={() => {
+                sendMessage({ text: s });
+              }}
               className="h-8 px-4 rounded-full border border-border bg-background hover:bg-zinc-50 dark:hover:bg-zinc-900 text-xs font-heading font-medium text-foreground cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md shrink-0 outline-none"
             >
               {s}
@@ -200,10 +190,7 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic, allC
       {/* Input container */}
       <div className="py-2.5 px-4 border-t border-border bg-background shrink-0">
         <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSend(inputVal);
-          }}
+          onSubmit={handleSubmit}
           className="flex items-center gap-2"
         >
           {/* Micro Button (Simulated voice recording) */}
@@ -223,8 +210,8 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic, allC
 
           {/* Text Input */}
           <input
-            value={inputVal}
-            onChange={(e) => setInputVal(e.target.value)}
+            value={input}
+            onChange={handleInputChange}
             type="text"
             placeholder={isRecording ? "Говорите..." : "Опишите ваши симптомы..."}
             className="flex-1 h-10 border border-border rounded-full px-4 text-xs sm:text-sm font-heading font-medium bg-background text-foreground outline-none focus:border-zinc-400 transition-colors"
@@ -233,7 +220,7 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic, allC
           {/* Send Button */}
           <button
             type="submit"
-            disabled={!inputVal.trim()}
+            disabled={!input.trim()}
             className="size-10 rounded-full bg-zinc-900 text-zinc-50 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 disabled:bg-secondary disabled:text-muted-foreground flex items-center justify-center cursor-pointer transition-colors outline-none shrink-0"
           >
             <FaPaperPlane className="size-3.5" />

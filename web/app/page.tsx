@@ -13,6 +13,7 @@ import { Header } from "@/components/header";
 import { AIChat } from "@/components/ai-chat";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
+import { mockResults } from "@/lib/mock-data";
 
 // Cookie helper functions
 const getCookie = (name: string): string | null => {
@@ -48,51 +49,6 @@ const ClinicMap = dynamic(() => import("@/components/clinic-map"), {
     </div>
   ),
 });
-
-const mockResults: ServiceItem[] = [
-  {
-    title: "МРТ головного мозга с контрастированием",
-    price: "28 000 ₸",
-    oldPrice: "35 000 ₸",
-    clinic: "Медицинский центр «Сункар»",
-    address: "мкр. Нурсат, д. 23",
-    metro: "мкр. Нурсат",
-    distance: "1.2 км",
-    rating: "4.8",
-    reviewsCount: "142 отзыва",
-    badge: "Мед услуги",
-    lat: 42.3601,
-    lng: 69.6105,
-  },
-  {
-    title: "МРТ головного мозга (обзорное)",
-    price: "18 000 ₸",
-    oldPrice: "22 500 ₸",
-    clinic: "Диагностический центр «Орда»",
-    address: "ул. Бауыржана Момышулы, д. 14",
-    metro: "Аль-Фарабийский р-н",
-    distance: "0.8 км",
-    rating: "4.9",
-    reviewsCount: "89 отзывов",
-    badge: "Мед услуги",
-    lat: 42.3156,
-    lng: 69.5976,
-  },
-  {
-    title: "МРТ головного мозга + сосуды",
-    price: "42 000 ₸",
-    oldPrice: "5 000 ₸",
-    clinic: "Клиника «Interteach»",
-    address: "пр. Тауке хана, д. 45",
-    metro: "Енбекшинский р-н",
-    distance: "2.4 км",
-    rating: "4.7",
-    reviewsCount: "216 отзывов",
-    badge: "Мед услуги",
-    lat: 42.3195,
-    lng: 69.6154,
-  },
-];
 
 const placeholders = [
   "МРТ головного мозга с контрастом",
