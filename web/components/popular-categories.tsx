@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { FaStethoscope, FaHeartbeat, FaMicroscope } from "react-icons/fa";
 
 interface PopularCategoriesProps {
@@ -17,7 +17,8 @@ export function PopularCategories({ onSelect }: PopularCategoriesProps) {
         <Button
           onClick={() => onSelect("Прием врача-терапевта")}
           variant="outline"
-          className="flex items-center gap-2 bg-background border-transparent shadow-[0_2px_8px_rgba(56,189,248,0.25)] hover:shadow-[0_4px_12px_rgba(56,189,248,0.35)] transition-shadow duration-300 cursor-pointer"
+          size="sm"
+          className="shadow-[0_2px_8px_rgba(56,189,248,0.25)] hover:shadow-[0_4px_12px_rgba(56,189,248,0.35)] cursor-pointer"
         >
           <FaStethoscope className="text-accent" />
           <span>Терапия</span>
@@ -25,15 +26,19 @@ export function PopularCategories({ onSelect }: PopularCategoriesProps) {
         <Button
           onClick={() => onSelect("Консультация врача-кардиолога")}
           variant="outline"
-          className="flex items-center gap-2 bg-background border-transparent shadow-[0_2px_8px_rgba(56,189,248,0.25)] hover:shadow-[0_4px_12px_rgba(56,189,248,0.35)] transition-shadow duration-300 cursor-pointer"
+          size="sm"
+          className="shadow-[0_2px_8px_rgba(56,189,248,0.25)] hover:shadow-[0_4px_12px_rgba(56,189,248,0.35)] cursor-pointer"
         >
           <FaHeartbeat className="text-accent" />
           <span>Кардиология</span>
         </Button>
         <Button
-          onClick={() => onSelect("Клинический анализ крови с лейкоцитарной формулой")}
+          onClick={() =>
+            onSelect("Клинический анализ крови с лейкоцитарной формулой")
+          }
           variant="outline"
-          className="flex items-center gap-2 bg-background border-transparent shadow-[0_2px_8px_rgba(56,189,248,0.25)] hover:shadow-[0_4px_12px_rgba(56,189,248,0.35)] transition-shadow duration-300 cursor-pointer"
+          size="sm"
+          className="shadow-[0_2px_8px_rgba(56,189,248,0.25)] hover:shadow-[0_4px_12px_rgba(56,189,248,0.35)] cursor-pointer"
         >
           <FaMicroscope className="text-accent" />
           <span>Анализы</span>

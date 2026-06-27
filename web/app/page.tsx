@@ -20,7 +20,8 @@ const getCookie = (name: string): string | null => {
   if (typeof document === "undefined") return null;
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return decodeURIComponent(parts.pop()?.split(";").shift() || "");
+  if (parts.length === 2)
+    return decodeURIComponent(parts.pop()?.split(";").shift() || "");
   return null;
 };
 
@@ -36,7 +37,7 @@ const setCookie = (name: string, value: string, days = 365) => {
 const ClinicMap = dynamic(() => import("@/components/clinic-map"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-900 border-l border-border">
+    <div className="w-full h-full flex items-center justify-center bg-background border-l border-border">
       <div className="flex flex-col items-center gap-3">
         <div className="relative w-8 h-8">
           <div className="absolute inset-0 rounded-full border-2 border-accent/20" />
@@ -67,14 +68,22 @@ const aiPlaceholders = [
 ];
 
 export default function Home() {
-  const [searchState, setSearchState] = useState<"idle" | "searching" | "done">("idle");
+  const [searchState, setSearchState] = useState<"idle" | "searching" | "done">(
+    "idle",
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
-  const [filteredResults, setFilteredResults] = useState<ServiceItem[]>(mockResults);
-  const [selectedClinic, setSelectedClinic] = useState<ServiceItem | null>(null);
+  const [filteredResults, setFilteredResults] =
+    useState<ServiceItem[]>(mockResults);
+  const [selectedClinic, setSelectedClinic] = useState<ServiceItem | null>(
+    null,
+  );
   const [showMobileList, setShowMobileList] = useState(false);
-  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [userCoords, setUserCoords] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   const [searchType, setSearchType] = useState("Мед услуги");
   const [activeMode, setActiveMode] = useState<"search" | "chat">("search");
 
@@ -101,7 +110,10 @@ export default function Home() {
         const filtered = currentHistory.filter((item) => item !== query);
         const updatedHistory = [query, ...filtered].slice(0, 8);
         setSearchHistory(updatedHistory);
-        localStorage.setItem("med_search_history", JSON.stringify(updatedHistory));
+        localStorage.setItem(
+          "med_search_history",
+          JSON.stringify(updatedHistory),
+        );
 
         filterClinics(query);
 
@@ -120,7 +132,7 @@ export default function Home() {
         console.error("Failed to parse stored coordinates:", e);
       }
     } else {
-      const defaultCoords = { lat: 42.32, lng: 69.60 };
+      const defaultCoords = { lat: 42.32, lng: 69.6 };
       setUserCoords(defaultCoords);
       setCookie("med_user_coords", JSON.stringify(defaultCoords));
     }
@@ -157,7 +169,7 @@ export default function Home() {
         c.title.toLowerCase().includes(lowerQuery) ||
         c.clinic.toLowerCase().includes(lowerQuery) ||
         c.metro.toLowerCase().includes(lowerQuery) ||
-        c.address.toLowerCase().includes(lowerQuery)
+        c.address.toLowerCase().includes(lowerQuery),
     );
     setFilteredResults(filtered);
   };
@@ -232,14 +244,13 @@ export default function Home() {
 
         {/* Main Content Layout - Split Screen based on Golden Ratio */}
         <div className="flex-1 w-full h-full flex flex-row relative overflow-hidden">
-          
           {/* Left Side: Sidebar with Clinics & Search */}
           <div
             className={cn(
               "w-full md:w-[38.2%] flex flex-col h-full bg-background relative z-10 transition-transform duration-300 md:translate-x-0 border-r border-border shrink-0",
               showMobileList
                 ? "translate-x-0 absolute inset-0 md:relative"
-                : "-translate-x-full absolute inset-0 md:relative hidden md:flex"
+                : "-translate-x-full absolute inset-0 md:relative hidden md:flex",
             )}
           >
             {activeMode === "chat" ? (
@@ -292,7 +303,11 @@ export default function Home() {
                     </button>
                     <div className="flex-1">
                       <PlaceholdersAndVanishInput
-                        placeholders={searchType === "ИИ-Ассистент" ? aiPlaceholders : placeholders}
+                        placeholders={
+                          searchType === "ИИ-Ассистент"
+                            ? aiPlaceholders
+                            : placeholders
+                        }
                         onChange={handleChange}
                         onSubmit={onSubmit}
                         value={searchQuery}
@@ -313,7 +328,7 @@ export default function Home() {
                 </div>
 
                 {/* Scrollable Results Container */}
-                <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 no-scrollbar bg-zinc-50/50 dark:bg-zinc-950/20">
+                <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 no-scrollbar bg-background">
                   <AnimatePresence mode="wait">
                     {searchState === "searching" ? (
                       <motion.div
@@ -334,7 +349,9 @@ export default function Home() {
                         className="space-y-4"
                       >
                         <div className="flex justify-between items-center text-xs text-muted-foreground font-heading font-semibold px-1">
-                          <span>Найдено предложений: {filteredResults.length}</span>
+                          <span>
+                            Найдено предложений: {filteredResults.length}
+                          </span>
                           {selectedClinic && (
                             <button
                               onClick={() => setSelectedClinic(null)}
@@ -347,7 +364,8 @@ export default function Home() {
 
                         {filteredResults.length === 0 ? (
                           <div className="py-12 text-center text-sm text-muted-foreground font-heading">
-                            Ничего не найдено по этому запросу. Попробуйте изменить фильтры.
+                            Ничего не найдено по этому запросу. Попробуйте
+                            изменить фильтры.
                           </div>
                         ) : (
                           filteredResults.map((clinic, idx) => {
@@ -368,7 +386,7 @@ export default function Home() {
                                   "cursor-pointer transition-all duration-300 rounded-xl",
                                   isSelected
                                     ? "ring-2 ring-sky-400/60 shadow-[0_0_15px_rgba(56,189,248,0.2)]"
-                                    : ""
+                                    : "",
                                 )}
                               >
                                 <ServiceCard item={clinic} index={idx} />
@@ -386,8 +404,8 @@ export default function Home() {
 
           {/* Right Side: Map Container */}
           <div className="flex-1 h-full relative z-0">
-            {/* Inner White Glow Overlay */}
-            <div className="absolute inset-0 z-10 pointer-events-none shadow-[inset_0_0_80px_50px_rgba(255,255,255,1)]" />
+            {/* Inner edge fade matching page background */}
+            <div className="absolute inset-0 z-10 pointer-events-none shadow-[inset_0_0_80px_50px_rgba(235,235,235,1)]" />
             <ClinicMap
               clinics={filteredResults}
               selectedClinic={selectedClinic}
@@ -451,7 +469,9 @@ export default function Home() {
         <div className="flex items-center gap-3 w-full">
           <div className="flex-1">
             <PlaceholdersAndVanishInput
-              placeholders={searchType === "ИИ-Ассистент" ? aiPlaceholders : placeholders}
+              placeholders={
+                searchType === "ИИ-Ассистент" ? aiPlaceholders : placeholders
+              }
               onChange={handleChange}
               onSubmit={onSubmit}
               value={searchQuery}

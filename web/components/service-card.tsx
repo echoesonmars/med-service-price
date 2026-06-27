@@ -1,7 +1,7 @@
 "use client";
 
 import { ServiceItem } from "@/types/search";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { FaStar, FaChevronRight } from "react-icons/fa";
 import { motion } from "motion/react";
 
@@ -16,7 +16,7 @@ export function ServiceCard({ item, index }: ServiceCardProps) {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08, duration: 0.35 }}
-      className="p-6 rounded-xl border border-border bg-card hover:shadow-[0_12px_32px_rgba(56,189,248,0.15)] transition-all duration-300 flex flex-col sm:flex-row sm:items-center justify-between gap-6"
+      className="p-6 rounded-[18px] blogs-card flex flex-col sm:flex-row sm:items-center justify-between gap-6"
     >
       {/* Left side: Structured Information */}
       <div className="space-y-3.5 flex-1 text-left">
@@ -29,7 +29,9 @@ export function ServiceCard({ item, index }: ServiceCardProps) {
             <FaStar className="size-2.5 fill-current" />
             <span>{item.rating}</span>
             <span className="text-muted-foreground/80 font-normal text-[9px] ml-0.5">
-              ({item.reviewsCount.replace(" отзывов", "").replace(" отзыва", "")})
+              (
+              {item.reviewsCount.replace(" отзывов", "").replace(" отзыва", "")}
+              )
             </span>
           </div>
           <span className="text-xs text-muted-foreground flex items-center gap-1.5">
@@ -54,7 +56,9 @@ export function ServiceCard({ item, index }: ServiceCardProps) {
           <span className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
           <span className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_6px_rgba(56,189,248,0.6)]" />
-            <span className="font-heading font-bold text-foreground">{item.metro}</span>
+            <span className="font-heading font-bold text-foreground">
+              {item.metro}
+            </span>
           </span>
           <span className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
           <span>{item.distance}</span>
@@ -78,12 +82,12 @@ export function ServiceCard({ item, index }: ServiceCardProps) {
         </div>
 
         <Button
-          size="default"
-          variant="outline"
-          className="bg-background border-transparent shadow-[0_4px_12px_rgba(56,189,248,0.2)] hover:shadow-[0_6px_20px_rgba(56,189,248,0.35)] transition-all duration-300 text-xs py-2 px-5 h-10 cursor-pointer flex items-center gap-1.5"
+          variant="primary"
+          size="sm"
+          className="shadow-[0_4px_12px_rgba(56,189,248,0.2)] hover:shadow-[0_6px_20px_rgba(56,189,248,0.35)] cursor-pointer"
         >
           <span>Записаться</span>
-          <FaChevronRight className="size-2 text-foreground/70" />
+          <FaChevronRight className="size-2" />
         </Button>
       </div>
     </motion.div>

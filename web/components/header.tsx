@@ -3,13 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FaMapMarkerAlt, FaHistory, FaTrash } from "react-icons/fa";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu } from "@/components/ui/DropdownMenu";
 import { cn } from "@/lib/utils";
 
 // Cookie helper functions
@@ -17,7 +11,8 @@ const getCookie = (name: string): string | null => {
   if (typeof document === "undefined") return null;
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return decodeURIComponent(parts.pop()?.split(";").shift() || "");
+  if (parts.length === 2)
+    return decodeURIComponent(parts.pop()?.split(";").shift() || "");
   return null;
 };
 
@@ -35,9 +30,15 @@ interface HeaderProps {
   onClearHistory: () => void;
 }
 
-export function Header({ onSearchTrigger, searchHistory, onClearHistory }: HeaderProps) {
-  const [geoState, setGeoState] = useState<"loading" | "granted" | "denied">("loading");
-  const [locationName, setLocationName] = useState("Моя локация");
+export function Header({
+  onSearchTrigger,
+  searchHistory,
+  onClearHistory,
+}: HeaderProps) {
+  const [geoState, setGeoState] = useState<"loading" | "granted" | "denied">(
+    "loading",
+  );
+  const [locationName, setLocationName] = useState("Шымкент");
 
   const requestGeo = () => {
     if (typeof window === "undefined" || !navigator.geolocation) {
@@ -57,18 +58,20 @@ export function Header({ onSearchTrigger, searchHistory, onClearHistory }: Heade
         setLocationName(formatted);
         setCookie("med_user_coords", JSON.stringify(newCoords));
         setCookie("med_user_location_name", "Моя локация");
-        
+
         // Dispatch custom event to notify app/page.tsx
         window.dispatchEvent(new Event("med_location_updated"));
       },
       (error) => {
         console.warn("Geolocation prompt failed:", error);
         if (error.code === 1) {
-          alert("Разрешите доступ к геолокации в настройках вашего браузера (кликните по иконке настроек/замочка в адресной строке).");
+          alert(
+            "Разрешите доступ к геолокации в настройках вашего браузера (кликните по иконке настроек/замочка в адресной строке).",
+          );
           setGeoState("denied");
         } else {
           // Hardware/Timeout fallback to Shymkent
-          const defaultCoords = { lat: 42.32, lng: 69.60 };
+          const defaultCoords = { lat: 42.32, lng: 69.6 };
           setGeoState("granted");
           setLocationName("Моя локация");
           setCookie("med_user_coords", JSON.stringify(defaultCoords));
@@ -76,7 +79,7 @@ export function Header({ onSearchTrigger, searchHistory, onClearHistory }: Heade
           window.dispatchEvent(new Event("med_location_updated"));
         }
       },
-      { enableHighAccuracy: true, timeout: 6000 }
+      { enableHighAccuracy: true, timeout: 6000 },
     );
   };
 
@@ -101,8 +104,8 @@ export function Header({ onSearchTrigger, searchHistory, onClearHistory }: Heade
       setGeoState("granted");
     } else {
       // Default to Shymkent, Kazakhstan initially without prompting browser Geolocation popup
-      const defaultCoords = { lat: 42.32, lng: 69.60 };
-      setLocationName("Моя локация");
+      const defaultCoords = { lat: 42.32, lng: 69.6 };
+      setLocationName("Шымкент");
       setGeoState("granted");
       setCookie("med_user_coords", JSON.stringify(defaultCoords));
       setCookie("med_user_location_name", "Моя локация");
@@ -137,7 +140,7 @@ export function Header({ onSearchTrigger, searchHistory, onClearHistory }: Heade
   return (
     <header className="w-full h-16 flex items-center justify-between px-6 absolute top-0 left-0 right-0 z-50">
       {/* Brand Logo */}
-      <Link 
+      <Link
         href="/"
         className="h-9 flex items-center font-didact font-extrabold text-lg sm:text-xl text-foreground tracking-tight cursor-pointer select-none leading-none"
       >
@@ -164,58 +167,55 @@ export function Header({ onSearchTrigger, searchHistory, onClearHistory }: Heade
               <div className="absolute inset-0 rounded-full border border-accent border-t-transparent animate-spin" />
             </div>
           ) : (
-            <FaMapMarkerAlt className={cn(
-              "size-3.5 transition-colors",
-              geoState === "granted" ? "text-sky-400" : "text-muted-foreground/50"
-            )} />
+            <FaMapMarkerAlt
+              className={cn(
+                "size-3.5 transition-colors",
+                geoState === "granted"
+                  ? "text-sky-400"
+                  : "text-muted-foreground/50",
+              )}
+            />
           )}
         </button>
 
         {/* Search History Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            className="size-9 rounded-full border border-border bg-background hover:bg-zinc-100 dark:hover:bg-zinc-800 text-foreground flex items-center justify-center cursor-pointer transition-colors shadow-sm outline-none"
-            title="История поиска"
-          >
-            <FaHistory className="size-3.5 text-foreground/75" />
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent align="end" className="w-56 bg-background border border-border rounded-xl shadow-lg p-1.5 z-[100]">
-            <div className="px-2 py-1.5 text-[10px] uppercase font-bold tracking-wider text-muted-foreground font-heading">
-              История поиска
+        <DropdownMenu
+          trigger={
+            <div
+              className="size-9 rounded-full border border-border bg-background hover:bg-zinc-100 dark:hover:bg-zinc-800 text-foreground flex items-center justify-center cursor-pointer transition-colors shadow-sm"
+              title="История поиска"
+            >
+              <FaHistory className="size-3.5 text-foreground/75" />
             </div>
-            <DropdownMenuSeparator className="my-1 bg-border/10" />
-
-            {searchHistory.length === 0 ? (
-              <div className="px-2 py-3 text-xs text-muted-foreground text-center">
-                История пуста
-              </div>
-            ) : (
-              <>
-                <div className="max-h-48 overflow-y-auto no-scrollbar space-y-0.5">
-                  {searchHistory.map((query, index) => (
-                    <DropdownMenuItem
-                      key={index}
-                      onClick={() => onSearchTrigger?.(query)}
-                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium hover:bg-secondary cursor-pointer transition-colors outline-none"
-                    >
-                      <FaHistory className="size-3 text-muted-foreground shrink-0" />
-                      <span className="truncate text-foreground">{query}</span>
-                    </DropdownMenuItem>
-                  ))}
-                </div>
-                <DropdownMenuSeparator className="my-1 bg-border/10" />
-                <DropdownMenuItem
-                  onClick={onClearHistory}
-                  className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-destructive hover:bg-destructive/10 cursor-pointer transition-colors outline-none w-full"
-                >
-                  <FaTrash className="size-2.5" />
-                  <span>Очистить историю</span>
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          }
+          items={
+            searchHistory.length === 0
+              ? [{ key: "empty", label: "История пуста", disabled: true }]
+              : [
+                  ...searchHistory.map((query, idx) => ({
+                    key: `h:${idx}`,
+                    label: query,
+                    icon: <FaHistory className="size-3" />,
+                  })),
+                  { key: "d:", label: "", divider: true as const },
+                  {
+                    key: "c:",
+                    label: "Очистить историю",
+                    danger: true,
+                    icon: <FaTrash className="size-2.5" />,
+                  },
+                ]
+          }
+          onSelect={(key) => {
+            if (key === "c:") {
+              onClearHistory();
+            } else if (key.startsWith("h:")) {
+              const idx = parseInt(key.slice(2));
+              onSearchTrigger?.(searchHistory[idx]);
+            }
+          }}
+          position="bottom-end"
+        />
       </div>
     </header>
   );

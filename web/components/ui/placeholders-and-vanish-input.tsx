@@ -3,13 +3,14 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { FaPlus, FaChevronDown, FaPaperclip, FaImage, FaTimes } from "react-icons/fa";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+  FaPlus,
+  FaChevronDown,
+  FaPaperclip,
+  FaImage,
+  FaTimes,
+} from "react-icons/fa";
+import { DropdownMenu } from "@/components/ui/DropdownMenu";
 
 interface Pixel {
   x: number;
@@ -43,15 +44,24 @@ export function PlaceholdersAndVanishInput({
 }) {
   const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
   const [localType, setLocalType] = useState("Мед услуги");
-  const selectedType = controlledType !== undefined ? controlledType : localType;
-  const setSelectedType = onTypeChange !== undefined ? onTypeChange : setLocalType;
+  const selectedType =
+    controlledType !== undefined ? controlledType : localType;
+  const setSelectedType =
+    onTypeChange !== undefined ? onTypeChange : setLocalType;
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const types = ["Аптеки", "Лекарства", "Мед центры", "Врачи", "Мед услуги", "ИИ-Ассистент"];
+  const types = [
+    "Аптеки",
+    "Лекарства",
+    "Мед центры",
+    "Врачи",
+    "Мед услуги",
+    "ИИ-Ассистент",
+  ];
 
   useEffect(() => {
     const startAnimation = () => {
@@ -85,7 +95,8 @@ export function PlaceholdersAndVanishInput({
 
   const [localValue, setLocalValue] = useState("");
   const value = controlledValue !== undefined ? controlledValue : localValue;
-  const setValue = setControlledValue !== undefined ? setControlledValue : setLocalValue;
+  const setValue =
+    setControlledValue !== undefined ? setControlledValue : setLocalValue;
   const [animating, setAnimating] = useState(false);
 
   const draw = useCallback(() => {
@@ -200,7 +211,7 @@ export function PlaceholdersAndVanishInput({
     if (val && inputRef.current) {
       const maxX = newDataRef.current.reduce(
         (prev, current) => (current.x > prev ? current.x : prev),
-        0
+        0,
       );
       animate(maxX);
     }
@@ -234,10 +245,7 @@ export function PlaceholdersAndVanishInput({
 
   return (
     <form
-      className={cn(
-        "w-full relative max-w-2xl mx-auto bg-background border border-border h-12 rounded-full overflow-hidden shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.05)] transition-shadow duration-500 ease-in-out focus-within:shadow-[0_8px_16px_-6px_rgba(56,189,248,0.35)] flex items-center px-2 gap-2",
-        value && "bg-background"
-      )}
+      className="w-full relative max-w-2xl mx-auto h-12 rounded-full flex items-center px-2 gap-2 search-bar-input"
       onSubmit={handleSubmit}
     >
       <input
@@ -257,49 +265,51 @@ export function PlaceholdersAndVanishInput({
       {/* Left controls */}
       <div className="flex items-center gap-1.5 shrink-0 z-50">
         {/* Dropdown 1: Plus button for files */}
-        <DropdownMenu>
-          <DropdownMenuTrigger className="h-8 w-8 rounded-full bg-secondary text-foreground hover:bg-zinc-200 dark:hover:bg-zinc-800 flex items-center justify-center transition-colors cursor-pointer outline-none shrink-0">
-            <FaPlus className="size-3" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <FaPaperclip className="size-3.5 opacity-60" />
-              <span>Закрепить файл</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => photoInputRef.current?.click()}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <FaImage className="size-3.5 opacity-60" />
-              <span>Закрепить фото</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <DropdownMenu
+          trigger={
+            <div className="h-8 w-8 rounded-full bg-secondary text-foreground hover:bg-zinc-200 dark:hover:bg-zinc-800 flex items-center justify-center transition-colors cursor-pointer shrink-0">
+              <FaPlus className="size-3" />
+            </div>
+          }
+          items={[
+            {
+              key: "file",
+              label: "Закрепить файл",
+              icon: <FaPaperclip className="size-3.5 opacity-60" />,
+            },
+            {
+              key: "photo",
+              label: "Закрепить фото",
+              icon: <FaImage className="size-3.5 opacity-60" />,
+            },
+          ]}
+          onSelect={(key) => {
+            if (key === "file") fileInputRef.current?.click();
+            if (key === "photo") photoInputRef.current?.click();
+          }}
+          position="bottom-start"
+        />
 
         {/* Dropdown 2: Type selector */}
-        <DropdownMenu>
-          <DropdownMenuTrigger className="h-8 px-3 rounded-full bg-secondary text-foreground hover:bg-zinc-200 dark:hover:bg-zinc-800 flex items-center gap-1.5 text-xs font-heading font-semibold transition-colors cursor-pointer outline-none shrink-0">
-            <span>{selectedType}</span>
-            <FaChevronDown className="size-2.5 opacity-60" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            {types.map((t) => (
-              <DropdownMenuItem
-                key={t}
-                onClick={() => setSelectedType(t)}
-                className="flex items-center justify-between cursor-pointer"
-              >
-                <span>{t}</span>
-                {selectedType === t && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                )}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <DropdownMenu
+          trigger={
+            <div className="h-8 px-3 rounded-full bg-secondary text-foreground hover:bg-zinc-200 dark:hover:bg-zinc-800 flex items-center gap-1.5 text-xs font-heading font-semibold transition-colors cursor-pointer shrink-0">
+              <span>{selectedType}</span>
+              <FaChevronDown className="size-2.5 opacity-60" />
+            </div>
+          }
+          items={types.map((t) => ({
+            key: t,
+            label: t,
+            ...(selectedType === t
+              ? {
+                  icon: <span className="w-1.5 h-1.5 rounded-full bg-accent" />,
+                }
+              : {}),
+          }))}
+          onSelect={(key) => setSelectedType(key)}
+          position="bottom-start"
+        />
 
         {/* Attached file pill */}
         {attachedFile && (
@@ -317,11 +327,11 @@ export function PlaceholdersAndVanishInput({
       </div>
 
       {/* Input container */}
-      <div className="relative flex-1 h-full flex items-center min-w-0">
+      <div className="relative flex-1 h-full flex items-center min-w-0 overflow-hidden">
         <canvas
           className={cn(
             "absolute pointer-events-none text-base transform scale-50 top-[20%] left-0 origin-top-left pr-14",
-            !animating ? "opacity-0" : "opacity-100"
+            !animating ? "opacity-0" : "opacity-100",
           )}
           ref={canvasRef}
         />
@@ -340,7 +350,7 @@ export function PlaceholdersAndVanishInput({
           type="text"
           className={cn(
             "w-full h-full bg-transparent border-none outline-none focus:ring-0 text-left font-heading font-medium text-sm sm:text-base text-foreground pl-1 pr-2",
-            animating && "text-transparent"
+            animating && "text-transparent",
           )}
         />
         <AnimatePresence mode="wait">

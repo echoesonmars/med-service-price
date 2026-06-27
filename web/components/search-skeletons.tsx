@@ -23,11 +23,11 @@ export function SearchSkeletons({ query }: SearchSkeletonsProps) {
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="p-5 rounded-2xl border border-border bg-background shadow-[0_2px_8px_rgba(56,189,248,0.05)] space-y-3 relative overflow-hidden"
+            className="p-5 rounded-[18px] blogs-card space-y-3 relative overflow-hidden"
           >
             {/* Shimmer effect */}
-            <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-zinc-100/50 dark:via-zinc-800/50 to-transparent animate-shimmer" />
-            
+            <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/70 to-transparent animate-shimmer" />
+
             <div className="flex justify-between items-start">
               <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-2/3 animate-pulse" />
               <div className="h-5 bg-accent/20 rounded w-16 animate-pulse" />

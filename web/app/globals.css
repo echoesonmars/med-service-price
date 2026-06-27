@@ -6,251 +6,371 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-heading);
-  --font-accent: var(--font-accent);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --font-sans: var(--font-sans);
+    --font-mono: var(--font-geist-mono);
+    --font-heading: var(--font-heading);
+    --font-accent: var(--font-accent);
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
 
-  --tracking-normal: var(--tracking-normal);
-  --tracking-tight: var(--tracking-normal);
-  --tracking-tighter: var(--tracking-normal);
-  --tracking-wide: var(--tracking-normal);
-  --tracking-wider: var(--tracking-normal);
-  --tracking-widest: var(--tracking-normal);
+    --tracking-normal: var(--tracking-normal);
+    --tracking-tight: var(--tracking-normal);
+    --tracking-tighter: var(--tracking-normal);
+    --tracking-wide: var(--tracking-normal);
+    --tracking-wider: var(--tracking-normal);
+    --tracking-widest: var(--tracking-normal);
 }
 
+/* ── Shared token set (light = default, dark inherits same) ──────── */
 :root {
-  --background: #ffffff;
-  --foreground: #000000;
-  --card: #ffffff;
-  --card-foreground: #000000;
-  --popover: #ffffff;
-  --popover-foreground: #000000;
-  --primary: #000000;
-  --primary-foreground: #ffffff;
-  --secondary: #f4f4f5;
-  --secondary-foreground: #000000;
-  --muted: #f4f4f5;
-  --muted-foreground: #52525b;
-  --accent: #38bdf8;
-  --accent-foreground: #000000;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-  --border: #000000;
-  --input: #000000;
-  --ring: #38bdf8;
-  --chart-1: #000000;
-  --chart-2: #38bdf8;
-  --chart-3: #52525b;
-  --chart-4: #a1a1aa;
-  --chart-5: #e4e4e7;
-  --radius: 0.625rem;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #000000;
-  --sidebar-primary: #000000;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e0f2fe;
-  --sidebar-accent-foreground: #000000;
-  --sidebar-border: #000000;
-  --sidebar-ring: #38bdf8;
+    /* blogs palette */
+    --background: #ebebeb;
+    --foreground: #111111;
+    --card: #ffffff;
+    --card-foreground: #111111;
+    --popover: #ffffff;
+    --popover-foreground: #111111;
+    --primary: #111111;
+    --primary-foreground: #ffffff;
+    --secondary: #f4f4f5;
+    --secondary-foreground: #111111;
+    --muted: #f4f4f5;
+    --muted-foreground: #52525b;
+    --accent: #38bdf8;
+    --accent-foreground: #111111;
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    /* soft neutral border — not harsh black */
+    --border: #d4d4d4;
+    --input: #d4d4d4;
+    --ring: #38bdf8;
+    --chart-1: #111111;
+    --chart-2: #38bdf8;
+    --chart-3: #52525b;
+    --chart-4: #a1a1aa;
+    --chart-5: #e4e4e7;
+    --radius: 0.625rem;
+    --sidebar: #ebebeb;
+    --sidebar-foreground: #111111;
+    --sidebar-primary: #111111;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #e0f2fe;
+    --sidebar-accent-foreground: #111111;
+    --sidebar-border: #d4d4d4;
+    --sidebar-ring: #38bdf8;
 
-  --font-sans: var(--font-geist-sans), sans-serif;
-  --font-heading: var(--font-didact-gothic), sans-serif;
-  --font-accent: var(--font-didact-gothic), sans-serif;
+    --font-sans: var(--font-geist-sans), sans-serif;
+    --font-heading: var(--font-didact-gothic), sans-serif;
+    --font-accent: var(--font-didact-gothic), sans-serif;
 
-  --tracking-normal: -0.03rem;
+    --tracking-normal: -0.03rem;
 }
 
+/* keep same values in dark — app is light-only */
 .dark {
-  --background: #ffffff;
-  --foreground: #000000;
-  --card: #ffffff;
-  --card-foreground: #000000;
-  --popover: #ffffff;
-  --popover-foreground: #000000;
-  --primary: #000000;
-  --primary-foreground: #ffffff;
-  --secondary: #f4f4f5;
-  --secondary-foreground: #000000;
-  --muted: #f4f4f5;
-  --muted-foreground: #52525b;
-  --accent: #38bdf8;
-  --accent-foreground: #000000;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-  --border: #000000;
-  --input: #000000;
-  --ring: #38bdf8;
-  --chart-1: #000000;
-  --chart-2: #38bdf8;
-  --chart-3: #52525b;
-  --chart-4: #a1a1aa;
-  --chart-5: #e4e4e7;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #000000;
-  --sidebar-primary: #000000;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e0f2fe;
-  --sidebar-accent-foreground: #000000;
-  --sidebar-border: #000000;
-  --sidebar-ring: #38bdf8;
+    --background: #ebebeb;
+    --foreground: #111111;
+    --card: #ffffff;
+    --card-foreground: #111111;
+    --popover: #ffffff;
+    --popover-foreground: #111111;
+    --primary: #111111;
+    --primary-foreground: #ffffff;
+    --secondary: #f4f4f5;
+    --secondary-foreground: #111111;
+    --muted: #f4f4f5;
+    --muted-foreground: #52525b;
+    --accent: #38bdf8;
+    --accent-foreground: #111111;
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --border: #d4d4d4;
+    --input: #d4d4d4;
+    --ring: #38bdf8;
+    --chart-1: #111111;
+    --chart-2: #38bdf8;
+    --chart-3: #52525b;
+    --chart-4: #a1a1aa;
+    --chart-5: #e4e4e7;
+    --sidebar: #ebebeb;
+    --sidebar-foreground: #111111;
+    --sidebar-primary: #111111;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #e0f2fe;
+    --sidebar-accent-foreground: #111111;
+    --sidebar-border: #d4d4d4;
+    --sidebar-ring: #38bdf8;
 }
 
 @layer base {
-  * {
-    border-color: var(--border);
-    outline-color: var(--ring);
-    letter-spacing: -0.03rem !important;
-  }
-  body {
-    @apply bg-background text-foreground;
-    font-family: var(--font-geist-sans), sans-serif;
-  }
-  html {
-    @apply font-sans;
-    font-family: var(--font-geist-sans), sans-serif;
-  }
-  h1, h2, h3, h4, h5, h6, .font-heading, .font-accent, .font-bold, .font-semibold, .font-extrabold {
-    font-family: var(--font-didact-gothic), sans-serif;
-  }
+    * {
+        border-color: var(--border);
+        outline-color: var(--ring);
+        letter-spacing: -0.03rem !important;
+    }
+    body {
+        @apply bg-background text-foreground;
+        font-family: var(--font-geist-sans), sans-serif;
+    }
+    html {
+        @apply font-sans;
+        font-family: var(--font-geist-sans), sans-serif;
+    }
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    .font-heading,
+    .font-accent,
+    .font-bold,
+    .font-semibold,
+    .font-extrabold {
+        font-family: var(--font-didact-gothic), sans-serif;
+    }
 }
+
+/* ── blogs design-system helpers ─────────────────────────────────── */
+
+/* Pill search-bar: Input.tsx shadow treatment on a <form> / container */
+.search-bar-input {
+    background: linear-gradient(180deg, #f7f7f7 0%, #fbfbfb 100%);
+    box-shadow:
+        inset 0 0 0 1px rgba(17, 17, 17, 0.12),
+        inset 0 1px 2px rgba(17, 17, 17, 0.03),
+        0 1px 2px -1px rgba(17, 17, 17, 0.04);
+    transition:
+        box-shadow 200ms ease-out,
+        background 200ms ease-out;
+}
+.search-bar-input:hover:not(:focus-within) {
+    background: linear-gradient(180deg, #f2f2f2 0%, #f7f7f7 100%);
+    box-shadow:
+        inset 0 0 0 1px rgba(17, 17, 17, 0.2),
+        inset 0 1px 2px rgba(17, 17, 17, 0.04),
+        0 1px 3px -1px rgba(17, 17, 17, 0.06);
+}
+.search-bar-input:focus-within {
+    background: #ffffff;
+    box-shadow:
+        inset 0 0 0 1px rgba(17, 17, 17, 0.92),
+        0 0 0 4px rgba(17, 17, 17, 0.08),
+        0 2px 6px -2px rgba(17, 17, 17, 0.08);
+}
+
+/* blogs-card: white card with depth shadows on the #ebebeb background */
+.blogs-card {
+    background: #ffffff;
+    box-shadow:
+        0 1px 2px rgba(17, 17, 17, 0.04),
+        0 2px 8px -2px rgba(17, 17, 17, 0.04),
+        0 0 0 1px rgba(17, 17, 17, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    transition: box-shadow 400ms ease-out;
+}
+.blogs-card:hover {
+    box-shadow:
+        0 2px 6px rgba(17, 17, 17, 0.03),
+        0 8px 24px -4px rgba(17, 17, 17, 0.08),
+        0 16px 48px -8px rgba(17, 17, 17, 0.1),
+        0 0 0 1px rgba(17, 17, 17, 0.08),
+        inset 0 2px 0 rgba(255, 255, 255, 1);
+}
+
+/* blogs-input: Input.tsx shadow on a bare <input> element */
+.blogs-input {
+    background: linear-gradient(180deg, #f7f7f7 0%, #fbfbfb 100%);
+    box-shadow:
+        inset 0 0 0 1px rgba(17, 17, 17, 0.12),
+        inset 0 1px 2px rgba(17, 17, 17, 0.03),
+        0 1px 2px -1px rgba(17, 17, 17, 0.04);
+    transition:
+        box-shadow 200ms ease-out,
+        background 200ms ease-out;
+    border: none;
+    outline: none;
+}
+.blogs-input:hover {
+    background: linear-gradient(180deg, #f2f2f2 0%, #f7f7f7 100%);
+    box-shadow:
+        inset 0 0 0 1px rgba(17, 17, 17, 0.2),
+        inset 0 1px 2px rgba(17, 17, 17, 0.04),
+        0 1px 3px -1px rgba(17, 17, 17, 0.06);
+}
+.blogs-input:focus {
+    background: #ffffff;
+    box-shadow:
+        inset 0 0 0 1px rgba(17, 17, 17, 0.92),
+        0 0 0 4px rgba(17, 17, 17, 0.08),
+        0 2px 6px -2px rgba(17, 17, 17, 0.08);
+    outline: none;
+}
+
+/* ── Keyframes ───────────────────────────────────────────────────── */
 @keyframes shimmer {
-  100% {
-    transform: translateX(100%);
-  }
+    100% {
+        transform: translateX(100%);
+    }
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
 }
 
+@keyframes input-shimmer {
+    0% {
+        transform: translateX(0%);
+        opacity: 0;
+    }
+    12% {
+        opacity: 1;
+    }
+    88% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(420%);
+        opacity: 0;
+    }
+}
+.animate-input-shimmer {
+    animation: input-shimmer 850ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* ── Font helpers ────────────────────────────────────────────────── */
 .font-didact {
-  font-family: var(--font-didact-gothic), sans-serif !important;
+    font-family: var(--font-didact-gothic), sans-serif !important;
 }
 
-/* Custom Leaflet overrides */
+/* ── Leaflet overrides ───────────────────────────────────────────── */
 .leaflet-container {
-  font-family: var(--font-sans), sans-serif !important;
-  background-color: #ffffff !important;
-  letter-spacing: -0.03rem !important;
+    font-family: var(--font-sans), sans-serif !important;
+    background-color: #ebebeb !important;
+    letter-spacing: -0.03rem !important;
 }
 
 .leaflet-popup-content-wrapper {
-  background: #ffffff !important;
-  color: #000000 !important;
-  border: 1px solid #000000 !important;
-  border-radius: 12px !important; /* rounded-xl */
-  box-shadow: 0 12px 32px rgba(56, 189, 248, 0.15) !important;
-  padding: 0 !important;
-  overflow: hidden;
+    background: #ffffff !important;
+    color: #111111 !important;
+    border: 1px solid rgba(17, 17, 17, 0.12) !important;
+    border-radius: 16px !important;
+    box-shadow:
+        0 4px 16px rgba(17, 17, 17, 0.08),
+        0 0 0 1px rgba(17, 17, 17, 0.06) !important;
+    padding: 0 !important;
+    overflow: hidden;
 }
 
 .leaflet-popup-content {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 280px !important; /* fixed width for nice popup cards */
-  font-family: var(--font-sans), sans-serif !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 280px !important;
+    font-family: var(--font-sans), sans-serif !important;
 }
 
 .leaflet-popup-close-button {
-  color: #000000 !important;
-  font-size: 16px !important;
-  font-weight: bold !important;
-  top: 10px !important;
-  right: 10px !important;
-  width: 20px !important;
-  height: 20px !important;
-  line-height: 20px !important;
-  background: transparent !important;
-  border: none !important;
-  z-index: 1000;
-  transition: color 0.2s ease;
+    color: #52525b !important;
+    font-size: 16px !important;
+    font-weight: bold !important;
+    top: 10px !important;
+    right: 10px !important;
+    width: 20px !important;
+    height: 20px !important;
+    line-height: 20px !important;
+    background: transparent !important;
+    border: none !important;
+    z-index: 1000;
+    transition: color 0.2s ease;
 }
 
 .leaflet-popup-close-button:hover {
-  color: #38bdf8 !important;
+    color: #111111 !important;
 }
 
 .leaflet-popup-tip-container {
-  margin-top: -1px !important; /* pull it slightly up to overlay the border nicely */
+    margin-top: -1px !important;
 }
 
 .leaflet-popup-tip {
-  background: #ffffff !important;
-  border: 1px solid #000000 !important;
-  box-shadow: none !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(17, 17, 17, 0.1) !important;
+    box-shadow: none !important;
 }
 
-/* Custom Zoom Control */
+/* Zoom control */
 .leaflet-bar {
-  border: 1px solid #000000 !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
-  border-radius: 8px !important; /* rounded-lg */
-  overflow: hidden;
+    border: 1px solid rgba(17, 17, 17, 0.12) !important;
+    box-shadow:
+        0 1px 2px rgba(17, 17, 17, 0.04),
+        0 0 0 1px rgba(17, 17, 17, 0.04) !important;
+    border-radius: 10px !important;
+    overflow: hidden;
 }
 
 .leaflet-bar a {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-  border-bottom: 1px solid #000000 !important;
-  transition: all 0.2s ease;
-  width: 32px !important;
-  height: 32px !important;
-  line-height: 32px !important;
-  font-size: 16px !important;
-  font-weight: bold !important;
+    background-color: #ffffff !important;
+    color: #111111 !important;
+    border-bottom: 1px solid rgba(17, 17, 17, 0.08) !important;
+    transition: all 0.15s ease;
+    width: 32px !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    font-size: 16px !important;
+    font-weight: bold !important;
 }
 
 .leaflet-bar a:last-child {
-  border-bottom: none !important;
+    border-bottom: none !important;
 }
 
 .leaflet-bar a:hover {
-  background-color: #f4f4f5 !important;
-  color: #38bdf8 !important;
+    background-color: #f7f7f7 !important;
+    color: #38bdf8 !important;
 }
 
-/* Hide default leaflet attribution for cleaner high-end dashboard look */
 .leaflet-control-attribution {
-  display: none !important;
+    display: none !important;
 }
-

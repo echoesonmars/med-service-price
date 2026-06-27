@@ -2,7 +2,12 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useChat } from "@ai-sdk/react";
-import { isToolUIPart, getToolName, DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls } from "ai";
+import {
+  isToolUIPart,
+  getToolName,
+  DefaultChatTransport,
+  lastAssistantMessageIsCompleteWithToolCalls,
+} from "ai";
 import { FaMicrophone, FaPaperPlane, FaCopy, FaRedo } from "react-icons/fa";
 import { ServiceItem } from "@/types/search";
 import { ServiceCard } from "@/components/service-card";
@@ -16,14 +21,18 @@ interface AIChatProps {
   allClinics: ServiceItem[];
 }
 
-export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic }: AIChatProps) {
+export function AIChat({
+  initialQuery = "",
+  onSelectClinic,
+  selectedClinic,
+}: AIChatProps) {
   const { messages, sendMessage, setMessages, status, regenerate } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
     }),
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
   });
-  
+
   const isLoading = status === "streaming" || status === "submitted";
   const [input, setInput] = useState("");
   const [isRecording, setIsRecording] = useState(false);
@@ -34,7 +43,7 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic }: AI
     "Болит спина в пояснице",
     "Сильная головная боль",
     "Где сделать МРТ мозга?",
-    "Анализ крови на витамины"
+    "Анализ крови на витамины",
   ];
 
   // Simulate voice recording input
@@ -54,6 +63,21 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic }: AI
     if (initialQuery && initialQuery !== lastSentQueryRef.current) {
       lastSentQueryRef.current = initialQuery;
       sendMessage({ text: initialQuery });
+    } else {
+      // Welcome message
+      setMessages([
+        {
+          id: "welcome",
+          role: "assistant",
+          parts: [
+            {
+              type: "text",
+              text: "Здравствуйте! Я ваш интеллектуальный помощник MedServicePrice. Опишите ваши симптомы или то, что вас беспокоит, и я помогу подобрать нужные медицинские исследования и покажу клиники на карте Шымкента.",
+              state: "done",
+            },
+          ],
+        },
+      ]);
     }
   }, [initialQuery, sendMessage]);
 
@@ -76,10 +100,10 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic }: AI
   return (
     <div className="flex flex-col h-full bg-background relative overflow-hidden">
       {/* Scrollable Message Thread */}
-      <div className="flex-1 overflow-y-auto py-3 px-4 md:py-4 md:px-6 flex flex-col gap-3.5 no-scrollbar bg-zinc-50/50 dark:bg-zinc-950/20">
+      <div className="flex-1 overflow-y-auto py-3 px-4 md:py-4 md:px-6 flex flex-col gap-3.5 no-scrollbar bg-background">
         {messages.map((msg) => {
           const isBot = msg.role === "assistant";
-          
+
           let messageText = "";
           const msgWithContent = msg as unknown as { content?: string };
           if (msgWithContent.content) {
@@ -118,7 +142,7 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic }: AI
               key={msg.id}
               className={cn(
                 "flex flex-col max-w-[85%] space-y-2 animate-fade-in shrink-0",
-                isBot ? "self-start items-start" : "self-end items-end ml-auto"
+                isBot ? "self-start items-start" : "self-end items-end ml-auto",
               )}
             >
               {/* Message bubble */}
@@ -129,24 +153,29 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic }: AI
                       "py-2.5 px-4 rounded-2xl text-xs sm:text-sm font-heading shadow-sm",
                       isBot
                         ? "bg-background border border-border text-foreground"
-                        : "bg-zinc-900 text-zinc-50 dark:bg-zinc-100 dark:text-zinc-900"
+                        : "bg-zinc-900 text-zinc-50 dark:bg-zinc-100 dark:text-zinc-900",
                     )}
                   >
                     {isBot ? (
                       <MarkdownMessage
                         text={messageText}
-                        isStreaming={status === "streaming" && messages[messages.length - 1]?.id === msg.id}
+                        isStreaming={
+                          status === "streaming" &&
+                          messages[messages.length - 1]?.id === msg.id
+                        }
                       />
                     ) : (
                       <span className="leading-relaxed">{messageText}</span>
                     )}
                   </div>
-                  
+
                   {/* Actions for Assistant Messages */}
                   {isBot && (
                     <div className="flex items-center gap-2 px-1 text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <button
-                        onClick={() => navigator.clipboard.writeText(messageText)}
+                        onClick={() =>
+                          navigator.clipboard.writeText(messageText)
+                        }
                         className="flex items-center gap-1 hover:text-foreground cursor-pointer transition-colors p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none"
                         title="Копировать текст"
                       >
@@ -186,7 +215,7 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic }: AI
                             "cursor-pointer transition-all duration-300 rounded-xl",
                             isSelected
                               ? "ring-2 ring-sky-400/60 shadow-[0_0_12px_rgba(56,189,248,0.15)]"
-                              : ""
+                              : "",
                           )}
                         >
                           <ServiceCard item={clinic} index={idx} />
@@ -220,7 +249,7 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic }: AI
               onClick={() => {
                 sendMessage({ text: s });
               }}
-              className="h-8 px-4 rounded-full border border-border bg-background hover:bg-zinc-50 dark:hover:bg-zinc-900 text-xs font-heading font-medium text-foreground cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md shrink-0 outline-none"
+              className="h-8 px-4 rounded-full border border-border bg-white hover:bg-zinc-50 text-xs font-heading font-medium text-foreground cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md shrink-0 outline-none"
             >
               {s}
             </button>
@@ -229,11 +258,8 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic }: AI
       )}
 
       {/* Input container */}
-      <div className="py-2.5 px-4 border-t border-border bg-background shrink-0">
-        <form
-          onSubmit={handleSubmit}
-          className="flex items-center gap-2"
-        >
+      <div className="py-2.5 px-4 border-t border-border bg-white shrink-0">
+        <form onSubmit={handleSubmit} className="flex items-center gap-2">
           {/* Micro Button (Simulated voice recording) */}
           <button
             type="button"
@@ -242,7 +268,7 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic }: AI
               "size-10 rounded-full border flex items-center justify-center cursor-pointer transition-all outline-none shrink-0",
               isRecording
                 ? "bg-destructive border-destructive text-destructive-foreground animate-pulse"
-                : "border-border bg-background hover:bg-zinc-100 text-foreground"
+                : "border-border bg-white hover:bg-zinc-50 text-foreground",
             )}
             title={isRecording ? "Запись идет..." : "Записать симптомы голосом"}
           >
@@ -254,8 +280,10 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic }: AI
             value={input}
             onChange={handleInputChange}
             type="text"
-            placeholder={isRecording ? "Говорите..." : "Опишите ваши симптомы..."}
-            className="flex-1 h-10 border border-border rounded-full px-4 text-xs sm:text-sm font-heading font-medium bg-background text-foreground outline-none focus:border-zinc-400 transition-colors"
+            placeholder={
+              isRecording ? "Говорите..." : "Опишите ваши симптомы..."
+            }
+            className="flex-1 h-10 rounded-full px-4 text-xs sm:text-sm font-heading font-medium text-foreground blogs-input"
           />
 
           {/* Send Button */}
