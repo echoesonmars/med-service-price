@@ -1,0 +1,144 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database
+  postgres:
+    image: ankane/pgvector:latest
+    container_name: medserviceprice-db
+    environment:
+      POSTGRES_USER: medservice
+      POSTGRES_PASSWORD: medservice123
+      POSTGRES_DB: medserviceprice
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medservice"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and Celery
+  redis:
+    image: redis:7-alpine
+    container_name: medserviceprice-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: medserviceprice-backend
+    environment:
+      DATABASE_URL: postgresql://medservice:medservice123@postgres:5432/medserviceprice
+      REDIS_URL: redis://redis:6379/0
+      EMBEDDING_MODEL: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+      SIMILARITY_THRESHOLD: 0.92
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Agent Worker
+  agent-worker:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    container_name: medserviceprice-agent-worker
+    environment:
+      DATABASE_URL: postgresql://medservice:medservice123@postgres:5432/medserviceprice
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      EMBEDDING_MODEL: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+      SIMILARITY_THRESHOLD: 0.92
+      USER_AGENT: MedServicePrice-Bot/1.0
+      SCRAPING_DELAY: 2
+      SCRAPING_TIMEOUT: 30
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./agent:/app
+    command: celery -A app.main worker --loglevel=info --concurrency=4
+
+  # Agent Beat (Scheduler)
+  agent-beat:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    container_name: medserviceprice-agent-beat
+    environment:
+      DATABASE_URL: postgresql://medservice:medservice123@postgres:5432/medserviceprice
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./agent:/app
+    command: celery -A app.main beat --loglevel=info
+
+  # Flower (Celery monitoring)
+  flower:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    container_name: medserviceprice-flower
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    ports:
+      - "5555:5555"
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: celery -A app.main flower --port=5555
+
+  # Web Frontend (optional - if running separately)
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: medserviceprice-web
+    environment:
+      DATABASE_URL: file:./prisma/dev.db
+      NEXT_PUBLIC_API_URL: http://backend:8000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./web:/app
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
+
+volumes:
+  postgres_data:
+  redis_data:

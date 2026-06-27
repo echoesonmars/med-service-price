@@ -41,10 +41,138 @@ graph TD
 
 ---
 
-## Запуск проекта
+## Быстрый старт с Docker
+
+```bash
+# 1. Клонировать репозиторий
+git clone <repo-url>
+cd last-terricon
+
+# 2. Настроить переменные окружения
+cp .env.example .env
+# Отредактировать .env (добавить API ключи)
+
+# 3. Запустить все сервисы
+docker-compose up -d
+
+# 4. Применить миграции базы данных
+docker-compose exec backend alembic upgrade head
+
+# 5. (Опционально) Загрузить тестовые данные
+docker-compose exec backend python app/utils/migrate_data.py
+```
+
+**Доступные сервисы:**
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000 (docs: http://localhost:8000/docs)
+- Flower (Celery monitoring): http://localhost:5555
+
+---
+
+## Запуск без Docker
 
 ### Фронтенд (`/web`)
 ```bash
 cd web
+npm install
 npm run dev
+# http://localhost:3000
 ```
+
+### Backend (`/backend`)
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+# Настроить .env
+./start.sh
+# http://localhost:8000
+```
+
+### Agent (`/agent`)
+```bash
+cd agent
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+# Настроить .env
+
+# Terminal 1: Worker
+./start_worker.sh
+
+# Terminal 2: Beat (scheduler)
+./start_beat.sh
+
+# Terminal 3: Flower (monitoring)
+celery -A app.main flower
+# http://localhost:5555
+```
+
+---
+
+## Требования
+
+- **Docker & Docker Compose** (рекомендуется)
+- Или локально:
+  - Python 3.11+
+  - Node.js 18+
+  - PostgreSQL 14+ с расширением pgvector
+  - Redis 7+
+
+---
+
+## Архитектура
+
+```
+┌─────────────┐      ┌──────────────┐      ┌─────────────┐
+│   Web UI    │─────▶│   Backend    │─────▶│  PostgreSQL │
+│  (Next.js)  │      │   (FastAPI)  │      │  + pgvector │
+└─────────────┘      └──────────────┘      └─────────────┘
+       │                     │                     ▲
+       │                     │                     │
+       │                     ▼                     │
+       │              ┌──────────────┐            │
+       │              │    Redis     │            │
+       │              │   (Cache)    │            │
+       │              └──────────────┘            │
+       │                     ▲                     │
+       │                     │                     │
+       ▼                     │                     │
+┌─────────────┐      ┌──────────────┐            │
+│  AI Chat    │      │    Agent     │────────────┘
+│  (Gemini)   │      │   (Celery)   │
+└─────────────┘      └──────────────┘
+                            │
+                     ┌──────┴──────┐
+                     │             │
+              ┌──────▼────┐ ┌─────▼──────┐
+              │  Scraper  │ │ Normalizer │
+              │   Tasks   │ │   (LLM)    │
+              └───────────┘ └────────────┘
+```
+
+---
+
+## Статус реализации
+
+✅ **Завершено:**
+- Frontend (Next.js) с AI чатом, картами, поиском
+- Backend API (FastAPI) с семантическим поиском
+- Agent service (Celery) со скрапингом и нормализацией
+- Database schema с pgvector
+- Price history tracking
+- Docker configuration
+
+🔄 **В разработке:**
+- Расширение парсеров для большего числа клиник
+- Улучшение LLM prompts для нормализации
+- Мониторинг и алертинг
+
+---
+
+## Лицензия
+
+MIT
