@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { ServiceItem } from "@/types/search";
 import { Button } from "@/components/ui/Button";
-import { FaStar, FaChevronRight } from "react-icons/fa";
+import { FaStar, FaChevronRight, FaChartLine } from "react-icons/fa";
 import { motion } from "motion/react";
+import { PriceHistoryChart } from "@/components/price-history-chart";
 
 interface ServiceCardProps {
   item: ServiceItem;
@@ -11,13 +13,16 @@ interface ServiceCardProps {
 }
 
 export function ServiceCard({ item, index }: ServiceCardProps) {
+  const [showPriceHistory, setShowPriceHistory] = useState(false);
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.08, duration: 0.35 }}
-      className="p-6 rounded-[18px] blogs-card flex flex-col sm:flex-row sm:items-center justify-between gap-6"
-    >
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.08, duration: 0.35 }}
+        className="p-6 rounded-[18px] blogs-card flex flex-col sm:flex-row sm:items-center justify-between gap-6"
+      >
       {/* Left side: Structured Information */}
       <div className="space-y-3.5 flex-1 text-left">
         {/* Top Metadata Row */}
@@ -83,6 +88,20 @@ export function ServiceCard({ item, index }: ServiceCardProps) {
               Скидка {Math.round((1 - item.priceRaw / item.oldPriceRaw) * 100)}%
             </div>
           )}
+          
+          {/* Price History Button */}
+          {item.id && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowPriceHistory(true);
+              }}
+              className="flex items-center gap-1.5 text-[10px] text-accent hover:text-accent/80 font-heading font-semibold transition-colors mt-1 sm:ml-auto"
+            >
+              <FaChartLine className="size-2.5" />
+              <span>История цен</span>
+            </button>
+          )}
         </div>
 
         <Button
@@ -95,5 +114,15 @@ export function ServiceCard({ item, index }: ServiceCardProps) {
         </Button>
       </div>
     </motion.div>
+
+    {/* Price History Modal */}
+    {showPriceHistory && item.id && (
+      <PriceHistoryChart
+        serviceId={item.id}
+        serviceName={item.title}
+        onClose={() => setShowPriceHistory(false)}
+      />
+    )}
+    </>
   );
 }

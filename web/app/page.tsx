@@ -8,9 +8,10 @@ import { PopularCategories } from "@/components/popular-categories";
 import { SearchSkeletons } from "@/components/search-skeletons";
 import { ServiceCard } from "@/components/service-card";
 import { ServiceItem, SearchResponse, CategoryCount } from "@/types/search";
-import { FaArrowLeft, FaList, FaMap } from "react-icons/fa";
+import { FaArrowLeft, FaList, FaMap, FaColumns } from "react-icons/fa";
 import { Header } from "@/components/header";
 import { AIChat } from "@/components/ai-chat";
+import { CompareTable } from "@/components/compare-table";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 
@@ -87,6 +88,7 @@ export default function Home() {
   } | null>(null);
   const [searchType, setSearchType] = useState("Мед услуги");
   const [activeMode, setActiveMode] = useState<"search" | "chat">("search");
+  const [showCompare, setShowCompare] = useState(false);
 
   // Fetch services from API
   const fetchServices = useCallback(
@@ -415,14 +417,25 @@ export default function Home() {
                           <span>
                             Найдено предложений: {totalResults}
                           </span>
-                          {selectedClinic && (
-                            <button
-                              onClick={() => setSelectedClinic(null)}
-                              className="text-accent hover:underline cursor-pointer"
-                            >
-                              Сбросить выбор
-                            </button>
-                          )}
+                          <div className="flex items-center gap-3">
+                            {searchResults.length > 1 && (
+                              <button
+                                onClick={() => setShowCompare(true)}
+                                className="flex items-center gap-1.5 text-accent hover:underline cursor-pointer"
+                              >
+                                <FaColumns className="text-xs" />
+                                <span>Сравнить цены</span>
+                              </button>
+                            )}
+                            {selectedClinic && (
+                              <button
+                                onClick={() => setSelectedClinic(null)}
+                                className="text-accent hover:underline cursor-pointer"
+                              >
+                                Сбросить выбор
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         {searchResults.length === 0 ? (
@@ -495,6 +508,14 @@ export default function Home() {
             )}
           </button>
         </div>
+
+        {/* Compare Table Modal */}
+        {showCompare && searchResults.length > 0 && (
+          <CompareTable
+            services={searchResults}
+            onClose={() => setShowCompare(false)}
+          />
+        )}
       </main>
     );
   }
