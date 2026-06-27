@@ -34,10 +34,12 @@ export function ServiceCard({ item, index }: ServiceCardProps) {
               )
             </span>
           </div>
-          <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            <span>Открыто до 21:00</span>
-          </span>
+          {item.workHours && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              <span>{item.workHours === "Круглосуточно" ? "Круглосуточно" : `до ${item.workHours.split("-")[1] || "21:00"}`}</span>
+            </span>
+          )}
         </div>
 
         {/* Content Hierarchy */}
@@ -76,9 +78,11 @@ export function ServiceCard({ item, index }: ServiceCardProps) {
               {item.oldPrice}
             </span>
           </div>
-          <div className="text-[10px] text-green-600 font-bold bg-green-500/10 px-2 py-0.5 rounded-full w-fit sm:ml-auto">
-            Скидка 20% по записи
-          </div>
+          {item.oldPrice && item.priceRaw && item.oldPriceRaw && item.oldPriceRaw > item.priceRaw && (
+            <div className="text-[10px] text-green-600 font-bold bg-green-500/10 px-2 py-0.5 rounded-full w-fit sm:ml-auto">
+              Скидка {Math.round((1 - item.priceRaw / item.oldPriceRaw) * 100)}%
+            </div>
+          )}
         </div>
 
         <Button

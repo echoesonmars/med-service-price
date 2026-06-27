@@ -1,0 +1,45 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Clinic {
+  id          String    @id @default(cuid())
+  name        String
+  address     String
+  city        String    @default("Шымкент")
+  lat         Float
+  lng         Float
+  phone       String?
+  website     String?
+  rating      Float     @default(0)
+  reviewCount Int       @default(0)
+  workHours   String?
+  logoUrl     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  services    Service[]
+}
+
+model Service {
+  id        String   @id @default(cuid())
+  title     String
+  category  String
+  price     Int
+  oldPrice  Int?
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clinicId])
+  @@index([category])
+  @@index([title])
+}

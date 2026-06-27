@@ -1,19 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { PlaceholdersAndVanishInput } from "@/components/ui/placeholders-and-vanish-input";
 import { SearchFilters } from "@/components/search-filters";
 import { PopularCategories } from "@/components/popular-categories";
 import { SearchSkeletons } from "@/components/search-skeletons";
 import { ServiceCard } from "@/components/service-card";
-import { ServiceItem } from "@/types/search";
+import { ServiceItem, SearchResponse, CategoryCount } from "@/types/search";
 import { FaArrowLeft, FaList, FaMap } from "react-icons/fa";
 import { Header } from "@/components/header";
 import { AIChat } from "@/components/ai-chat";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
-import { mockResults } from "@/lib/mock-data";
 
 // Cookie helper functions
 const getCookie = (name: string): string | null => {
@@ -73,9 +72,11 @@ export default function Home() {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
+  const [activeCategory, setActiveCategory] = useState("all");
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
-  const [filteredResults, setFilteredResults] =
-    useState<ServiceItem[]>(mockResults);
+  const [searchResults, setSearchResults] = useState<ServiceItem[]>([]);
+  const [totalResults, setTotalResults] = useState(0);
+  const [categories, setCategories] = useState<CategoryCount[]>([]);
   const [selectedClinic, setSelectedClinic] = useState<ServiceItem | null>(
     null,
   );
@@ -87,6 +88,60 @@ export default function Home() {
   const [searchType, setSearchType] = useState("Мед услуги");
   const [activeMode, setActiveMode] = useState<"search" | "chat">("search");
 
+  // Fetch services from API
+  const fetchServices = useCallback(
+    async (query: string, filter: string, category: string) => {
+      try {
+        const params = new URLSearchParams();
+        if (query) params.set("q", query);
+        if (category && category !== "all") params.set("category", category);
+
+        // Map filter to sort parameter
+        switch (filter) {
+          case "price_asc":
+            params.set("sortBy", "price_asc");
+            break;
+          case "price_desc":
+            params.set("sortBy", "price_desc");
+            break;
+          case "rating":
+            params.set("sortBy", "rating");
+            break;
+          default:
+            params.set("sortBy", "relevance");
+        }
+
+        const response = await fetch(`/api/services?${params.toString()}`);
+        if (!response.ok) throw new Error("Failed to fetch services");
+
+        const data: SearchResponse = await response.json();
+
+        // Calculate distances if user coords available
+        const resultsWithDistance = data.results.map((item) => {
+          if (userCoords && item.lat && item.lng) {
+            const dist = calculateDistance(
+              userCoords.lat,
+              userCoords.lng,
+              item.lat,
+              item.lng,
+            );
+            return { ...item, distance: `${dist.toFixed(1)} км` };
+          }
+          return item;
+        });
+
+        setSearchResults(resultsWithDistance);
+        setTotalResults(data.total);
+        setCategories(data.categories);
+      } catch (error) {
+        console.error("Error fetching services:", error);
+        setSearchResults([]);
+        setTotalResults(0);
+      }
+    },
+    [userCoords],
+  );
+
   // Load search history, URL query parameters, and cached geolocation on mount
   useEffect(() => {
     let currentHistory: string[] = [];
@@ -97,29 +152,6 @@ export default function Home() {
         setSearchHistory(currentHistory);
       } catch (e) {
         console.error("Failed to parse search history:", e);
-      }
-    }
-
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const query = params.get("q");
-      if (query) {
-        setSearchQuery(query);
-        setSearchState("searching");
-
-        const filtered = currentHistory.filter((item) => item !== query);
-        const updatedHistory = [query, ...filtered].slice(0, 8);
-        setSearchHistory(updatedHistory);
-        localStorage.setItem(
-          "med_search_history",
-          JSON.stringify(updatedHistory),
-        );
-
-        filterClinics(query);
-
-        setTimeout(() => {
-          setSearchState("done");
-        }, 1500);
       }
     }
 
@@ -137,6 +169,39 @@ export default function Home() {
       setCookie("med_user_coords", JSON.stringify(defaultCoords));
     }
   }, []);
+
+  // Handle URL query parameter on mount (after coords are loaded)
+  useEffect(() => {
+    if (!userCoords) return;
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const query = params.get("q");
+      if (query && searchState === "idle") {
+        setSearchQuery(query);
+        setSearchState("searching");
+
+        const saved = localStorage.getItem("med_search_history");
+        let currentHistory: string[] = [];
+        if (saved) {
+          try {
+            currentHistory = JSON.parse(saved);
+          } catch { /* ignore */ }
+        }
+        const filtered = currentHistory.filter((item) => item !== query);
+        const updatedHistory = [query, ...filtered].slice(0, 8);
+        setSearchHistory(updatedHistory);
+        localStorage.setItem(
+          "med_search_history",
+          JSON.stringify(updatedHistory),
+        );
+
+        fetchServices(query, "all", "all").then(() => {
+          setSearchState("done");
+        });
+      }
+    }
+  }, [userCoords, fetchServices, searchState]);
 
   // Listen to custom location update event
   useEffect(() => {
@@ -162,19 +227,7 @@ export default function Home() {
     localStorage.setItem("med_search_history", JSON.stringify(newList));
   };
 
-  const filterClinics = (queryText: string) => {
-    const lowerQuery = queryText.toLowerCase();
-    const filtered = mockResults.filter(
-      (c) =>
-        c.title.toLowerCase().includes(lowerQuery) ||
-        c.clinic.toLowerCase().includes(lowerQuery) ||
-        c.metro.toLowerCase().includes(lowerQuery) ||
-        c.address.toLowerCase().includes(lowerQuery),
-    );
-    setFilteredResults(filtered);
-  };
-
-  const triggerSearch = (queryText: string) => {
+  const triggerSearch = async (queryText: string) => {
     setSearchQuery(queryText);
     setSearchState("searching");
 
@@ -185,9 +238,11 @@ export default function Home() {
 
     if (searchType === "ИИ-Ассистент") {
       setActiveMode("chat");
+      setSearchState("done");
     } else {
       setActiveMode("search");
-      filterClinics(queryText);
+      await fetchServices(queryText, activeFilter, activeCategory);
+      setSearchState("done");
     }
 
     // Sync URL query parameter without page reload
@@ -196,12 +251,14 @@ export default function Home() {
       url.searchParams.set("q", queryText);
       window.history.replaceState({}, "", url.toString());
     }
-
-    // Simulate search results loading for 1.2 seconds
-    setTimeout(() => {
-      setSearchState("done");
-    }, 1200);
   };
+
+  // Re-fetch when filter or category changes
+  useEffect(() => {
+    if (searchState === "done" && activeMode === "search" && searchQuery) {
+      fetchServices(searchQuery, activeFilter, activeCategory);
+    }
+  }, [activeFilter, activeCategory, searchState, activeMode, searchQuery, fetchServices]);
 
   const clearHistory = () => {
     saveHistory([]);
@@ -221,7 +278,10 @@ export default function Home() {
     setSearchQuery("");
     setSearchState("idle");
     setActiveFilter("all");
-    setFilteredResults(mockResults);
+    setActiveCategory("all");
+    setSearchResults([]);
+    setTotalResults(0);
+    setCategories([]);
     setSelectedClinic(null);
     setActiveMode("search");
     if (typeof window !== "undefined") {
@@ -285,7 +345,7 @@ export default function Home() {
                       }
                     }}
                     selectedClinic={selectedClinic}
-                    allClinics={mockResults}
+                    allClinics={searchResults}
                   />
                 </div>
               </div>
@@ -323,6 +383,9 @@ export default function Home() {
                     <SearchFilters
                       activeFilter={activeFilter}
                       onFilterChange={setActiveFilter}
+                      activeCategory={activeCategory}
+                      onCategoryChange={setActiveCategory}
+                      categories={categories}
                     />
                   </div>
                 </div>
@@ -350,7 +413,7 @@ export default function Home() {
                       >
                         <div className="flex justify-between items-center text-xs text-muted-foreground font-heading font-semibold px-1">
                           <span>
-                            Найдено предложений: {filteredResults.length}
+                            Найдено предложений: {totalResults}
                           </span>
                           {selectedClinic && (
                             <button
@@ -362,20 +425,20 @@ export default function Home() {
                           )}
                         </div>
 
-                        {filteredResults.length === 0 ? (
+                        {searchResults.length === 0 ? (
                           <div className="py-12 text-center text-sm text-muted-foreground font-heading">
                             Ничего не найдено по этому запросу. Попробуйте
                             изменить фильтры.
                           </div>
                         ) : (
-                          filteredResults.map((clinic, idx) => {
+                          searchResults.map((clinic, idx) => {
                             const isSelected =
                               selectedClinic &&
                               selectedClinic.clinic === clinic.clinic &&
                               selectedClinic.title === clinic.title;
                             return (
                               <div
-                                key={idx}
+                                key={clinic.id || idx}
                                 onClick={() => {
                                   setSelectedClinic(clinic);
                                   if (showMobileList) {
@@ -407,7 +470,7 @@ export default function Home() {
             {/* Inner edge fade matching page background */}
             <div className="absolute inset-0 z-10 pointer-events-none shadow-[inset_0_0_80px_50px_rgba(235,235,235,1)]" />
             <ClinicMap
-              clinics={filteredResults}
+              clinics={searchResults}
               selectedClinic={selectedClinic}
               onSelectClinic={setSelectedClinic}
               userCoords={userCoords}
@@ -427,7 +490,7 @@ export default function Home() {
             ) : (
               <>
                 <FaList className="size-3.5" />
-                <span>Показать список ({filteredResults.length})</span>
+                <span>Показать список ({totalResults})</span>
               </>
             )}
           </button>
@@ -486,4 +549,24 @@ export default function Home() {
       </motion.div>
     </main>
   );
+}
+
+// Haversine formula to calculate distance between two coordinates in km
+function calculateDistance(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number,
+): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
