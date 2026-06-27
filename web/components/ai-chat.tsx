@@ -2,10 +2,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useChat } from "@ai-sdk/react";
-import { isToolUIPart, getToolName, DefaultChatTransport } from "ai";
-import { FaMicrophone, FaPaperPlane } from "react-icons/fa";
+import { isToolUIPart, getToolName, DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls } from "ai";
+import { FaMicrophone, FaPaperPlane, FaCopy, FaRedo } from "react-icons/fa";
 import { ServiceItem } from "@/types/search";
 import { ServiceCard } from "@/components/service-card";
+import { MarkdownMessage } from "@/components/markdown-message";
 import { cn } from "@/lib/utils";
 
 interface AIChatProps {
@@ -16,12 +17,14 @@ interface AIChatProps {
 }
 
 export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic }: AIChatProps) {
-  const { messages, sendMessage, setMessages } = useChat({
+  const { messages, sendMessage, setMessages, status, regenerate } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
     }),
+    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
   });
   
+  const isLoading = status === "streaming" || status === "submitted";
   const [input, setInput] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -44,27 +47,15 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic }: AI
     }, 2000);
   };
 
+  const lastSentQueryRef = useRef("");
+
   // Handle initial query on mount or programmatically
   useEffect(() => {
-    if (initialQuery) {
+    if (initialQuery && initialQuery !== lastSentQueryRef.current) {
+      lastSentQueryRef.current = initialQuery;
       sendMessage({ text: initialQuery });
-    } else {
-      // Welcome message
-      setMessages([
-        {
-          id: "welcome",
-          role: "assistant",
-          parts: [
-            {
-              type: "text",
-              text: "Здравствуйте! Я ваш интеллектуальный помощник MedServicePrice. Опишите ваши симптомы или то, что вас беспокоит, и я помогу подобрать нужные медицинские исследования и покажу клиники на карте.",
-              state: "done"
-            }
-          ]
-        }
-      ]);
     }
-  }, [initialQuery, sendMessage, setMessages]);
+  }, [initialQuery, sendMessage]);
 
   // Scroll to bottom when messages update
   useEffect(() => {
@@ -90,12 +81,19 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic }: AI
           const isBot = msg.role === "assistant";
           
           let messageText = "";
+          const msgWithContent = msg as unknown as { content?: string };
+          if (msgWithContent.content) {
+            messageText = msgWithContent.content;
+          }
+
           const recommendations: ServiceItem[] = [];
 
           if (msg.parts) {
+            // If parts are present, they take precedence or append to text
+            let partsText = "";
             for (const part of msg.parts) {
               if (part.type === "text") {
-                messageText += part.text;
+                partsText += part.text;
               } else if (isToolUIPart(part)) {
                 const toolName = getToolName(part);
                 if (
@@ -105,6 +103,9 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic }: AI
                   recommendations.push(...(part.output as ServiceItem[]));
                 }
               }
+            }
+            if (partsText) {
+              messageText = partsText;
             }
           }
 
@@ -122,15 +123,46 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic }: AI
             >
               {/* Message bubble */}
               {messageText && (
-                <div
-                  className={cn(
-                    "py-2.5 px-4 rounded-2xl text-xs sm:text-sm font-heading leading-relaxed shadow-sm",
-                    isBot
-                      ? "bg-background border border-border text-foreground"
-                      : "bg-zinc-900 text-zinc-50 dark:bg-zinc-100 dark:text-zinc-900"
+                <div className="group relative flex flex-col items-start gap-1">
+                  <div
+                    className={cn(
+                      "py-2.5 px-4 rounded-2xl text-xs sm:text-sm font-heading shadow-sm",
+                      isBot
+                        ? "bg-background border border-border text-foreground"
+                        : "bg-zinc-900 text-zinc-50 dark:bg-zinc-100 dark:text-zinc-900"
+                    )}
+                  >
+                    {isBot ? (
+                      <MarkdownMessage
+                        text={messageText}
+                        isStreaming={status === "streaming" && messages[messages.length - 1]?.id === msg.id}
+                      />
+                    ) : (
+                      <span className="leading-relaxed">{messageText}</span>
+                    )}
+                  </div>
+                  
+                  {/* Actions for Assistant Messages */}
+                  {isBot && (
+                    <div className="flex items-center gap-2 px-1 text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <button
+                        onClick={() => navigator.clipboard.writeText(messageText)}
+                        className="flex items-center gap-1 hover:text-foreground cursor-pointer transition-colors p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none"
+                        title="Копировать текст"
+                      >
+                        <FaCopy className="size-2.5" />
+                        <span>Копировать</span>
+                      </button>
+                      <button
+                        onClick={() => regenerate({ messageId: msg.id })}
+                        className="flex items-center gap-1 hover:text-foreground cursor-pointer transition-colors p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none"
+                        title="Регенерировать ответ"
+                      >
+                        <FaRedo className="size-2.5" />
+                        <span>Регенерировать</span>
+                      </button>
+                    </div>
                   )}
-                >
-                  {messageText}
                 </div>
               )}
 
@@ -167,6 +199,15 @@ export function AIChat({ initialQuery = "", onSelectClinic, selectedClinic }: AI
             </div>
           );
         })}
+        {isLoading && (
+          <div className="flex items-center gap-2 self-start max-w-[85%] animate-fade-in shrink-0">
+            <div className="py-3 px-4 rounded-2xl bg-background border border-border text-foreground shadow-sm flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.3s]"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.15s]"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce"></span>
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 

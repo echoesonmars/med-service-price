@@ -158,6 +158,11 @@
   }
 }
 
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
 .font-didact {
   font-family: var(--font-didact-gothic), sans-serif !important;
 }

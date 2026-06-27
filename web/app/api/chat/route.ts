@@ -1,5 +1,5 @@
 import { google } from "@ai-sdk/google";
-import { streamText, tool, toUIMessageStream, createUIMessageStreamResponse } from "ai";
+import { streamText, tool, toUIMessageStream, createUIMessageStreamResponse, isStepCount, convertToModelMessages } from "ai";
 import { z } from "zod";
 import { mockResults } from "@/lib/mock-data";
 
@@ -11,7 +11,8 @@ export async function POST(req: Request) {
 
     const result = streamText({
       model: google(modelName),
-      messages,
+      messages: await convertToModelMessages(messages),
+      stopWhen: isStepCount(5),
       system: `Вы — интеллектуальный медицинский ассистент MedServicePrice.
 Ваша задача — помочь пользователю понять, какие исследования или к каким врачам ему стоит обратиться на основе описанных им симптомов.
 Если пользователь описывает симптомы или спрашивает о конкретной медицинской услуге (например, МРТ, УЗИ, анализы, прием врача), вы ОБЯЗАТЕЛЬНО должны вызвать инструмент 'search_clinics_by_symptom' для поиска предложений в клиниках.
