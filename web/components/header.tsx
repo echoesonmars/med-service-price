@@ -37,7 +37,7 @@ interface HeaderProps {
 
 export function Header({ onSearchTrigger, searchHistory, onClearHistory }: HeaderProps) {
   const [geoState, setGeoState] = useState<"loading" | "granted" | "denied">("loading");
-  const [locationName, setLocationName] = useState("Шымкент");
+  const [locationName, setLocationName] = useState("Моя локация");
 
   const requestGeo = () => {
     if (typeof window === "undefined" || !navigator.geolocation) {
@@ -70,9 +70,9 @@ export function Header({ onSearchTrigger, searchHistory, onClearHistory }: Heade
           // Hardware/Timeout fallback to Shymkent
           const defaultCoords = { lat: 42.32, lng: 69.60 };
           setGeoState("granted");
-          setLocationName("Шымкент");
+          setLocationName("Моя локация");
           setCookie("med_user_coords", JSON.stringify(defaultCoords));
-          setCookie("med_user_location_name", "Шымкент");
+          setCookie("med_user_location_name", "Моя локация");
           window.dispatchEvent(new Event("med_location_updated"));
         }
       },
@@ -102,17 +102,17 @@ export function Header({ onSearchTrigger, searchHistory, onClearHistory }: Heade
     } else {
       // Default to Shymkent, Kazakhstan initially without prompting browser Geolocation popup
       const defaultCoords = { lat: 42.32, lng: 69.60 };
-      setLocationName("Шымкент");
+      setLocationName("Моя локация");
       setGeoState("granted");
       setCookie("med_user_coords", JSON.stringify(defaultCoords));
-      setCookie("med_user_location_name", "Шымкент");
+      setCookie("med_user_location_name", "Моя локация");
       // Fire event to ensure page state aligns
       window.dispatchEvent(new Event("med_location_updated"));
     }
 
     // Listen to external updates to location (e.g. if updated elsewhere)
     const handleLocationUpdate = () => {
-      const updatedName = getCookie("med_user_location_name") || "Шымкент";
+      const updatedName = getCookie("med_user_location_name") || "Моя локация";
       if (updatedName === "Моя локация") {
         const coords = getCookie("med_user_coords");
         if (coords) {
