@@ -3,8 +3,7 @@ import { streamText, tool, toUIMessageStream, createUIMessageStreamResponse } fr
 import { z } from "zod";
 import { mockResults } from "@/lib/mock-data";
 
-// Default to gemini-1.5-flash if not specified in environment
-const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+const modelName = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
 
 export async function POST(req: Request) {
   try {
