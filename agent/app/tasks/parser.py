@@ -15,6 +15,10 @@ def parse_price_list(clinic_id: str, raw_data: Dict[str, Any]):
     """
     Parse raw price list data.
     
+    Scrapers may already extract services into raw_data['services'].
+    If present, those are used directly. Otherwise, falls back to
+    file-based parsing for html/excel/pdf types.
+    
     Args:
         clinic_id: Clinic ID
         raw_data: Raw scraped data with format info
@@ -24,20 +28,30 @@ def parse_price_list(clinic_id: str, raw_data: Dict[str, Any]):
     print(f"📄 Parsing price list for clinic {clinic_id}")
     
     try:
-        data_type = raw_data.get("type", "html")
+        # Check if scraper already extracted services
+        services = raw_data.get("services", [])
         
-        # Select parser based on type
-        if data_type == "html":
-            parser = HTMLParser()
-        elif data_type == "excel":
-            parser = ExcelParser()
-        elif data_type == "pdf":
-            parser = PDFParser()
+        if services:
+            print(f"📋 Using {len(services)} pre-extracted services from scraper")
         else:
-            raise ValueError(f"Unknown data type: {data_type}")
-        
-        # Parse
-        services = parser.parse(raw_data)
+            # Fall back to file-based parsing
+            data_type = raw_data.get("type", "html")
+            
+            if data_type == "html":
+                parser = HTMLParser()
+            elif data_type == "excel":
+                parser = ExcelParser()
+            elif data_type == "pdf":
+                parser = PDFParser()
+            else:
+                print(f"⚠️  Unknown data type '{data_type}' and no pre-extracted services")
+                return {
+                    "status": "skipped",
+                    "clinic_id": clinic_id,
+                    "reason": f"Unknown data type: {data_type}"
+                }
+            
+            services = parser.parse(raw_data)
         
         print(f"✅ Parsed {len(services)} services from clinic {clinic_id}")
         

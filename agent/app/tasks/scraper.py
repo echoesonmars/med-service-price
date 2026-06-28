@@ -11,22 +11,26 @@ from app.utils.database import async_session_maker
 
 
 @celery_app.task(name="app.tasks.scraper.scrape_clinic")
-def scrape_clinic(clinic_id: str, clinic_url: str, scraper_type: str):
+def scrape_clinic(clinic_id: str, clinic_url: str, scraper_type: str = "auto"):
     """
     Scrape a single clinic's price list.
     
     Args:
         clinic_id: Clinic ID in database
         clinic_url: URL to scrape
-        scraper_type: Type of scraper to use (e.g., 'kdl', 'html_table')
+        scraper_type: Type of scraper to use. 'auto' to detect from URL.
     """
     from app.tasks.parser import parse_price_list
     
     print(f"🕷️  Scraping clinic {clinic_id} from {clinic_url}")
     
     try:
-        # Get scraper
-        scraper = ScraperRegistry.get(scraper_type)
+        # Get scraper - auto-detect from URL or use specified type
+        if scraper_type == "auto":
+            scraper = ScraperRegistry.find_scraper_for_url(clinic_url)
+            print(f"🔍 Auto-detected scraper: {type(scraper).__name__}")
+        else:
+            scraper = ScraperRegistry.get(scraper_type)
         
         # Scrape
         raw_data = scraper.scrape(clinic_url)
@@ -90,7 +94,7 @@ def scrape_all_clinics():
         scrape_clinic.s(
             clinic_id=str(clinic.id),
             clinic_url=clinic.website,
-            scraper_type="html_generic"  # Default scraper
+            scraper_type="auto"  # Auto-detect best scraper for each URL
         )
         for clinic in clinics
     ])

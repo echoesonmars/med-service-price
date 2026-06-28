@@ -3,18 +3,27 @@ Scraper for KDL Olymp (kdlolymp.kz)
 Integrates with existing parser from /agent/parse/parser.py
 """
 from typing import Dict, Any, List
-import sys
+import importlib.util
 import os
-
-# Add parse directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../parse"))
 
 from app.scrapers.base import BaseScraper
 
+# Load parser module dynamically to avoid shadowing built-in 'parser'
+_parser_path = os.path.join(os.path.dirname(__file__), "../../parse/parser.py")
+_parser_path = os.path.abspath(_parser_path)
 try:
-    from parser import fetch_pricelist_html, parse_pricelist_html, extract_clinic_snapshot
-except ImportError:
-    # Fallback if parser not available
+    _spec = importlib.util.spec_from_file_location("kdl_parser", _parser_path)
+    if _spec and _spec.loader:
+        _mod = importlib.util.module_from_spec(_spec)
+        _spec.loader.exec_module(_mod)
+        fetch_pricelist_html = _mod.fetch_pricelist_html
+        parse_pricelist_html = _mod.parse_pricelist_html
+        extract_clinic_snapshot = _mod.extract_clinic_snapshot
+    else:
+        fetch_pricelist_html = None
+        parse_pricelist_html = None
+        extract_clinic_snapshot = None
+except Exception:
     fetch_pricelist_html = None
     parse_pricelist_html = None
     extract_clinic_snapshot = None
@@ -48,23 +57,23 @@ class KDLOlympScraper(BaseScraper):
             items = parse_pricelist_html(payload.html)
             clinic_snapshot = extract_clinic_snapshot(payload.html, city, payload.source_url)
             
-            # Convert to our format
+            # Convert ServiceItem dataclass instances to our dict format
             services = []
             for item in items:
-                # Parse price string "1 000 ₸" to integer
+                # ServiceItem.price is a string like "1 000 ₸" or None
                 price = None
-                if item.get("price"):
-                    price_str = item["price"].replace("₸", "").replace(" ", "").strip()
+                if item.price:
+                    price_str = item.price.replace("₸", "").replace(" ", "").strip()
                     try:
                         price = int(price_str)
                     except ValueError:
                         continue
                 
                 services.append({
-                    "title": item.get("title", ""),
+                    "title": item.title,
                     "price": price,
-                    "category": item.get("category", "Не указано"),
-                    "duration": item.get("duration"),
+                    "category": item.category or "Не указано",
+                    "duration": item.duration,
                 })
             
             return {
@@ -101,3 +110,4 @@ class KDLOlympScraper(BaseScraper):
         
         # Default to Shymkent
         return "shymkent"
+

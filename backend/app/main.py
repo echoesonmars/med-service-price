@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 import time
 
 from app.config import get_settings
-from app.api.v1 import services, categories, cities
+from app.api.v1 import services, categories, cities, seed
 
 settings = get_settings()
 
@@ -74,6 +74,12 @@ app.include_router(
     cities.router,
     prefix=settings.api_v1_prefix,
     tags=["cities"]
+)
+
+app.include_router(
+    seed.router,
+    prefix=settings.api_v1_prefix,
+    tags=["seed"]
 )
 
 
