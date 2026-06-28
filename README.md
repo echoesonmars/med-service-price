@@ -175,4 +175,5 @@ celery -A app.main flower
 
 ## Лицензия
 
-MIT
+Apache License 2.0 (см. файл [LICENSE](file:///d:/med-service-price/LICENSE))
+
