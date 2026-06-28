@@ -14,7 +14,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U medservice"]
+      test: ["CMD-SHELL", "pg_isready -U medservice -d medserviceprice"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -81,7 +81,7 @@ services:
         condition: service_healthy
     volumes:
       - ./agent:/app
-    command: celery -A app.main worker --loglevel=info --concurrency=4
+    command: celery -A app.main worker --loglevel=info --pool=solo
 
   # Agent Beat (Scheduler)
   agent-beat:

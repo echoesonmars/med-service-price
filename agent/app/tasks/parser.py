@@ -37,21 +37,25 @@ def parse_price_list(clinic_id: str, raw_data: Dict[str, Any]):
             # Fall back to file-based parsing
             data_type = raw_data.get("type", "html")
             
+            # Only try file-based parsing for known document types
             if data_type == "html":
                 parser = HTMLParser()
+                services = parser.parse(raw_data)
             elif data_type == "excel":
                 parser = ExcelParser()
+                services = parser.parse(raw_data)
             elif data_type == "pdf":
                 parser = PDFParser()
+                services = parser.parse(raw_data)
             else:
-                print(f"⚠️  Unknown data type '{data_type}' and no pre-extracted services")
+                # For custom scraper types (invitro, kdl_olymp, medcenter, etc.)
+                # If they didn't extract services, we can't do anything
+                print(f"⚠️  Scraper type '{data_type}' returned no services to parse")
                 return {
                     "status": "skipped",
                     "clinic_id": clinic_id,
-                    "reason": f"Unknown data type: {data_type}"
+                    "reason": f"No services extracted by {data_type} scraper"
                 }
-            
-            services = parser.parse(raw_data)
         
         print(f"✅ Parsed {len(services)} services from clinic {clinic_id}")
         

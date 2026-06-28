@@ -3,11 +3,26 @@ Celery tasks for web scraping
 """
 from celery import group
 from datetime import datetime, timedelta
-import asyncio
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
 
 from app.main import celery_app
 from app.scrapers.registry import ScraperRegistry
-from app.utils.database import async_session_maker
+from app.config import get_settings
+
+settings = get_settings()
+
+# Create SYNCHRONOUS engine for Celery tasks
+sync_engine = create_engine(
+    settings.database_url.replace("postgresql+asyncpg://", "postgresql://").replace("postgresql://", "postgresql+psycopg2://"),
+    echo=False,
+    pool_size=10,
+    max_overflow=20,
+    pool_pre_ping=True,
+    pool_recycle=3600,
+)
+
+SyncSessionLocal = sessionmaker(bind=sync_engine)
 
 
 @celery_app.task(name="app.tasks.scraper.scrape_clinic")
@@ -64,23 +79,17 @@ def scrape_all_clinics():
     """
     print("🔄 Starting daily scrape of all clinics...")
     
-    async def get_clinics():
-        from sqlalchemy import select, text
-        
-        async with async_session_maker() as session:
-            # Get all clinics with scraping configuration
-            query = text("""
-                SELECT id, name, website, city
-                FROM clinics
-                WHERE website IS NOT NULL
-                ORDER BY city, name
-            """)
-            
-            result = await session.execute(query)
-            return result.fetchall()
-    
     # Get clinics from database
-    clinics = asyncio.run(get_clinics())
+    with SyncSessionLocal() as session:
+        query = text("""
+            SELECT id, name, website, city
+            FROM clinics
+            WHERE website IS NOT NULL
+            ORDER BY city, name
+        """)
+        
+        result = session.execute(query)
+        clinics = result.fetchall()
     
     if not clinics:
         print("⚠️  No clinics found to scrape")
@@ -119,10 +128,8 @@ def cleanup_old_data(days: int = 90):
     """
     print(f"🧹 Cleaning up raw data older than {days} days...")
     
-    async def cleanup():
-        from sqlalchemy import text
-        
-        async with async_session_maker() as session:
+    try:
+        with SyncSessionLocal() as session:
             cutoff_date = datetime.utcnow() - timedelta(days=days)
             
             # Delete old raw fetches
@@ -131,13 +138,11 @@ def cleanup_old_data(days: int = 90):
                 WHERE fetched_at < :cutoff_date
             """)
             
-            result = await session.execute(query, {"cutoff_date": cutoff_date})
-            await session.commit()
+            result = session.execute(query, {"cutoff_date": cutoff_date})
+            session.commit()
             
-            return result.rowcount
-    
-    try:
-        deleted_count = asyncio.run(cleanup())
+            deleted_count = result.rowcount
+        
         print(f"✅ Deleted {deleted_count} old raw fetch records")
         
         return {

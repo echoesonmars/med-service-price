@@ -3,30 +3,26 @@ Scraper for KDL Olymp (kdlolymp.kz)
 Integrates with existing parser from /agent/parse/parser.py
 """
 from typing import Dict, Any, List
-import importlib.util
+import sys
 import os
 
 from app.scrapers.base import BaseScraper
 
-# Load parser module dynamically to avoid shadowing built-in 'parser'
-_parser_path = os.path.join(os.path.dirname(__file__), "../../parse/parser.py")
-_parser_path = os.path.abspath(_parser_path)
+# Add parse directory to Python path
+_parse_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../parse"))
+if _parse_dir not in sys.path:
+    sys.path.insert(0, _parse_dir)
+
+# Try to import parser functions
 try:
-    _spec = importlib.util.spec_from_file_location("kdl_parser", _parser_path)
-    if _spec and _spec.loader:
-        _mod = importlib.util.module_from_spec(_spec)
-        _spec.loader.exec_module(_mod)
-        fetch_pricelist_html = _mod.fetch_pricelist_html
-        parse_pricelist_html = _mod.parse_pricelist_html
-        extract_clinic_snapshot = _mod.extract_clinic_snapshot
-    else:
-        fetch_pricelist_html = None
-        parse_pricelist_html = None
-        extract_clinic_snapshot = None
-except Exception:
+    from parser import fetch_pricelist_html, parse_pricelist_html, extract_clinic_snapshot
+    _parser_available = True
+except Exception as e:
+    print(f"Warning: Could not import KDL parser: {e}")
     fetch_pricelist_html = None
     parse_pricelist_html = None
     extract_clinic_snapshot = None
+    _parser_available = False
 
 
 class KDLOlympScraper(BaseScraper):
@@ -45,7 +41,7 @@ class KDLOlympScraper(BaseScraper):
         Expected URL format:
         - https://www.kdlolymp.kz/pricelist/{city}
         """
-        if not all([fetch_pricelist_html, parse_pricelist_html, extract_clinic_snapshot]):
+        if not _parser_available:
             raise ImportError("KDL Olymp parser modules not available")
         
         # Extract city from URL

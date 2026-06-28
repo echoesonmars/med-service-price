@@ -7,7 +7,7 @@ settings = get_settings()
 # Создаем async engine
 engine = create_async_engine(
     settings.database_url.replace("postgresql://", "postgresql+asyncpg://"),
-    echo=True,
+    echo=False,
     future=True,
     pool_size=20,
     max_overflow=40,

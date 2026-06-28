@@ -7,6 +7,7 @@ from app.scrapers.html_scraper import HTMLScraper
 from app.scrapers.invitro_scraper import InvitroScraper
 from app.scrapers.kdl_olymp_scraper import KDLOlympScraper
 from app.scrapers.medcenter_scraper import MedCenterScraper
+from app.scrapers.iteka_scraper import ITekaScraper
 
 
 class ScraperRegistry:
@@ -18,6 +19,7 @@ class ScraperRegistry:
         "invitro": InvitroScraper,
         "kdl_olymp": KDLOlympScraper,
         "medcenter": MedCenterScraper,
+        "iteka": ITekaScraper,
     }
     
     @classmethod
@@ -40,6 +42,7 @@ class ScraperRegistry:
         """Find best scraper for a given URL"""
         # Try specialized scrapers first (order matters - most specific first)
         specialized = [
+            ITekaScraper,
             KDLOlympScraper,
             InvitroScraper,
             MedCenterScraper,
