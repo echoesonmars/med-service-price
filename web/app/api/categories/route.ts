@@ -1,13 +1,17 @@
-import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const categories = await prisma.service.groupBy({
-      by: ["category"],
-      _count: { category: true },
-      orderBy: { _count: { category: "desc" } },
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://backend:8000";
+    const backendResponse = await fetch(`${backendUrl}/api/v1/categories`, {
+      next: { revalidate: 60 }
     });
+
+    if (!backendResponse.ok) {
+      throw new Error(`Backend returned ${backendResponse.status}`);
+    }
+
+    const categoriesData = await backendResponse.json();
 
     const labels: Record<string, string> = {
       анализы: "Анализы",
@@ -24,10 +28,10 @@ export async function GET() {
     };
 
     return NextResponse.json(
-      categories.map((c) => ({
+      categoriesData.map((c: any) => ({
         value: c.category,
         label: labels[c.category] || c.category,
-        count: c._count.category,
+        count: c.count,
       })),
     );
   } catch (error) {

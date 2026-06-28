@@ -131,6 +131,7 @@ services:
     environment:
       DATABASE_URL: file:/app/prisma/dev.db
       NEXT_PUBLIC_API_URL: http://backend:8000
+      GOOGLE_GENERATIVE_AI_API_KEY: ${GOOGLE_API_KEY}
     ports:
       - "3000:3000"
     volumes:

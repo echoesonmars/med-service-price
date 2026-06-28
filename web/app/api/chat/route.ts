@@ -1,7 +1,6 @@
 import { google } from "@ai-sdk/google";
 import { streamText, tool, toUIMessageStream, createUIMessageStreamResponse, isStepCount, convertToModelMessages } from "ai";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
 
 const modelName = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
 
@@ -26,43 +25,43 @@ export async function POST(req: Request) {
             query: z.string().describe("Поисковый запрос (например: 'болит голова', 'мрт', 'узи органов брюшной полости', 'анализ крови')"),
           }),
           execute: async ({ query }) => {
-            const lowerQuery = query.toLowerCase();
+            const backendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://backend:8000";
             
-            // Search in real database
-            const services = await prisma.service.findMany({
-              where: {
-                OR: [
-                  { title: { contains: lowerQuery } },
-                  { category: { contains: lowerQuery } },
-                  { clinic: { name: { contains: lowerQuery } } },
-                ],
-              },
-              include: { clinic: true },
-              take: 6,
-              orderBy: { price: "asc" },
-            });
+            // Try searching via backend API
+            try {
+              const backendParams = new URLSearchParams();
+              backendParams.set("q", query);
+              backendParams.set("limit", "6");
+              backendParams.set("sort", "relevance");
 
-            // If no direct match, try keyword-based fallback
-            if (services.length === 0) {
-              const keywords = extractKeywords(lowerQuery);
-              const fallbackServices = await prisma.service.findMany({
-                where: {
-                  OR: keywords.map(kw => ({
-                    OR: [
-                      { title: { contains: kw } },
-                      { category: { contains: kw } },
-                    ],
-                  })),
-                },
-                include: { clinic: true },
-                take: 6,
-                orderBy: { price: "asc" },
-              });
+              const response = await fetch(`${backendUrl}/api/v1/services/search?${backendParams.toString()}`);
               
-              return formatResults(fallbackServices);
+              if (response.ok) {
+                const data = await response.json();
+                if (data.services && data.services.length > 0) {
+                  return formatResults(data.services);
+                }
+              }
+              
+              // If no direct match, try keyword-based fallback
+              const keywords = extractKeywords(query.toLowerCase());
+              if (keywords.length > 0) {
+                const fallbackParams = new URLSearchParams();
+                fallbackParams.set("q", keywords.join(" "));
+                fallbackParams.set("limit", "6");
+                fallbackParams.set("sort", "price_asc");
+                
+                const fallbackResponse = await fetch(`${backendUrl}/api/v1/services/search?${fallbackParams.toString()}`);
+                if (fallbackResponse.ok) {
+                  const fallbackData = await fallbackResponse.json();
+                  return formatResults(fallbackData.services || []);
+                }
+              }
+            } catch (err) {
+              console.error("Error calling backend search API from chat route:", err);
             }
 
-            return formatResults(services);
+            return [];
           },
         }),
       },
@@ -123,40 +122,22 @@ function extractKeywords(query: string): string[] {
 }
 
 // Format database results to match frontend ServiceItem shape
-function formatResults(services: Array<{
-  id: string;
-  title: string;
-  category: string;
-  price: number;
-  oldPrice: number | null;
-  clinic: {
-    id: string;
-    name: string;
-    address: string;
-    city: string;
-    lat: number;
-    lng: number;
-    phone: string | null;
-    rating: number;
-    reviewCount: number;
-    workHours: string | null;
-  };
-}>) {
+function formatResults(services: Array<any>) {
   return services.map(s => ({
     id: s.id,
     title: s.title,
     price: formatPrice(s.price),
-    oldPrice: s.oldPrice ? formatPrice(s.oldPrice) : "",
+    oldPrice: s.old_price ? formatPrice(s.old_price) : "",
     clinic: s.clinic.name,
     address: s.clinic.address,
     metro: s.clinic.address.split(",")[0],
     distance: "",
-    rating: s.clinic.rating.toFixed(1),
-    reviewsCount: `${s.clinic.reviewCount} отзывов`,
+    rating: s.clinic.rating ? s.clinic.rating.toFixed(1) : "0.0",
+    reviewsCount: `${s.clinic.review_count} отзывов`,
     badge: categoryLabel(s.category),
     lat: s.clinic.lat,
     lng: s.clinic.lng,
-    workHours: s.clinic.workHours,
+    workHours: s.clinic.work_hours || s.clinic.workHours,
   }));
 }
 
