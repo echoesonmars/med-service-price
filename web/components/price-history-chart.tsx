@@ -25,6 +25,7 @@ export function PriceHistoryChart({
 
   useEffect(() => {
     fetchHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serviceId, days]);
 
   const fetchHistory = async () => {

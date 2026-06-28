@@ -231,7 +231,7 @@ export default function Home() {
     localStorage.setItem("med_search_history", JSON.stringify(newList));
   };
 
-  const triggerSearch = async (queryText: string) => {
+  const triggerSearch = async (queryText: string, forcedSearchType?: string) => {
     setSearchQuery(queryText);
     setSearchState("searching");
 
@@ -240,7 +240,8 @@ export default function Home() {
     const updatedHistory = [queryText, ...filtered].slice(0, 8);
     saveHistory(updatedHistory);
 
-    if (searchType === "ИИ-Ассистент") {
+    const effectiveSearchType = forcedSearchType || searchType;
+    if (effectiveSearchType === "ИИ-Ассистент") {
       setActiveMode("chat");
       setSearchState("done");
     } else {
@@ -350,6 +351,11 @@ export default function Home() {
                     }}
                     selectedClinic={selectedClinic}
                     allClinics={searchResults}
+                    onTriggerMainSearch={(query, useSemantic) => {
+                      setSearchType("Мед услуги");
+                      setSemanticSearch(useSemantic);
+                      triggerSearch(query, "Мед услуги");
+                    }}
                   />
                 </div>
               </div>

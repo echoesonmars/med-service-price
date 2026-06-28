@@ -19,12 +19,14 @@ interface AIChatProps {
   onSelectClinic: (clinic: ServiceItem | null) => void;
   selectedClinic: ServiceItem | null;
   allClinics: ServiceItem[];
+  onTriggerMainSearch?: (query: string, useSemantic: boolean) => void;
 }
 
 export function AIChat({
   initialQuery = "",
   onSelectClinic,
   selectedClinic,
+  onTriggerMainSearch,
 }: AIChatProps) {
   const { messages, sendMessage, setMessages, status, regenerate } = useChat({
     transport: new DefaultChatTransport({
@@ -58,12 +60,16 @@ export function AIChat({
 
   const lastSentQueryRef = useRef("");
 
+  const isInitializedRef = useRef(false);
+
   // Handle initial query on mount or programmatically
   useEffect(() => {
     if (initialQuery && initialQuery !== lastSentQueryRef.current) {
       lastSentQueryRef.current = initialQuery;
       sendMessage({ text: initialQuery });
-    } else {
+      isInitializedRef.current = true;
+    } else if (!isInitializedRef.current && !initialQuery) {
+      isInitializedRef.current = true;
       // Welcome message
       setMessages([
         {
@@ -72,14 +78,14 @@ export function AIChat({
           parts: [
             {
               type: "text",
-              text: "Здравствуйте! Я ваш интеллектуальный помощник MedServicePrice. Опишите ваши симптомы или то, что вас беспокоит, и я помогу подобрать нужные медицинские исследования и покажу клиники на карте Шымкента.",
+              text: "Здравствуйте! Я ваш интеллектуальный помощник MedServicePrice. Опишите ваши симптомы или то, что вас беспокоит, и я помогу подобрать нужные медицинские исследования и покажу клиники на карте.",
               state: "done",
             },
           ],
         },
       ]);
     }
-  }, [initialQuery, sendMessage]);
+  }, [initialQuery, sendMessage, setMessages]);
 
   // Scroll to bottom when messages update
   useEffect(() => {
@@ -104,16 +110,12 @@ export function AIChat({
         {messages.map((msg) => {
           const isBot = msg.role === "assistant";
 
-          let messageText = "";
-          const msgWithContent = msg as unknown as { content?: string };
-          if (msgWithContent.content) {
-            messageText = msgWithContent.content;
-          }
+          const msgObj = msg as unknown as { content?: string, text?: string };
+          let messageText = msgObj.content || msgObj.text || "";
 
           const recommendations: ServiceItem[] = [];
 
-          if (msg.parts) {
-            // If parts are present, they take precedence or append to text
+          if (msg.parts && msg.parts.length > 0) {
             let partsText = "";
             for (const part of msg.parts) {
               if (part.type === "text") {
@@ -121,10 +123,19 @@ export function AIChat({
               } else if (isToolUIPart(part)) {
                 const toolName = getToolName(part);
                 if (
-                  toolName === "search_clinics_by_symptom" &&
+                  (toolName === "search_clinics_by_symptom" || toolName === "smart_search_clinics_by_symptom") &&
                   part.state === "output-available"
                 ) {
                   recommendations.push(...(part.output as ServiceItem[]));
+                } else if (
+                  toolName === "trigger_main_search" &&
+                  part.state === "output-available"
+                ) {
+                  const output = part.output as { action: string; query: string; semantic: boolean };
+                  if (output.action === "redirect_to_search" && onTriggerMainSearch) {
+                    // Schedule it to run after render to avoid state update during render
+                    setTimeout(() => onTriggerMainSearch(output.query, output.semantic), 10);
+                  }
                 }
               }
             }

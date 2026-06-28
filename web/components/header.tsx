@@ -38,7 +38,7 @@ export function Header({
   const [geoState, setGeoState] = useState<"loading" | "granted" | "denied">(
     "loading",
   );
-  const [locationName, setLocationName] = useState("Шымкент");
+  const [locationName, setLocationName] = useState("Ваш город");
 
   const requestGeo = () => {
     if (typeof window === "undefined" || !navigator.geolocation) {
@@ -105,7 +105,7 @@ export function Header({
     } else {
       // Default to Shymkent, Kazakhstan initially without prompting browser Geolocation popup
       const defaultCoords = { lat: 42.32, lng: 69.6 };
-      setLocationName("Шымкент");
+      setLocationName("Ваш город");
       setGeoState("granted");
       setCookie("med_user_coords", JSON.stringify(defaultCoords));
       setCookie("med_user_location_name", "Моя локация");

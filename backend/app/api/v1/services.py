@@ -23,6 +23,7 @@ async def search_services(
     sort: str = Query("relevance", description="Сортировка: relevance, price_asc, price_desc, rating"),
     page: int = Query(1, ge=1, description="Номер страницы"),
     limit: int = Query(20, ge=1, le=100, description="Количество результатов"),
+    semantic: bool = Query(False, description="Использовать семантический поиск"),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -37,24 +38,28 @@ async def search_services(
     
     search_service = SearchService(db)
     
-    # Выполнить поиск
-    services, total = await search_service.search(
-        query=q,
-        city=city,
-        category=category,
-        price_min=price_min,
-        price_max=price_max,
-        sort=sort,
-        page=page,
-        limit=limit,
-    )
+    if semantic and q:
+        services = await search_service.semantic_search(query=q, city=city, limit=limit)
+        total = len(services)
+    else:
+        # Выполнить поиск
+        services, total = await search_service.search(
+            query=q,
+            city=city,
+            category=category,
+            price_min=price_min,
+            price_max=price_max,
+            sort=sort,
+            page=page,
+            limit=limit,
+        )
     
     return ServiceSearchResponse(
         services=services,
         total=total,
         page=page,
         limit=limit,
-        has_more=total > (page * limit)
+        has_more=total > (page * limit) if not semantic else False
     )
 
 

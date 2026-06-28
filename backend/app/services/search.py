@@ -119,6 +119,7 @@ class SearchService:
     async def semantic_search(
         self,
         query: str,
+        city: Optional[str] = None,
         limit: int = 20,
     ) -> List[ServiceResponse]:
         """
@@ -169,10 +170,15 @@ class SearchService:
         # Получить услуги, привязанные к найденным каноническим услугам
         services_query = (
             select(Service)
+            .join(Clinic, Service.clinic_id == Clinic.id)
             .where(Service.canonical_service_id.in_(canonical_ids))
             .options(selectinload(Service.clinic))
-            .limit(limit)
         )
+        
+        if city:
+            services_query = services_query.where(Clinic.city == city)
+            
+        services_query = services_query.limit(limit)
         
         services_result = await self.db.execute(services_query)
         services = services_result.scalars().all()

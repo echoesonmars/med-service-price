@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { ServiceItem } from "@/types/search";
 import { FaTimes, FaCheck, FaStar, FaMapMarkerAlt } from "react-icons/fa";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 
 interface CompareTableProps {
   services: ServiceItem[];

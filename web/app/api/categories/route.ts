@@ -28,7 +28,7 @@ export async function GET() {
     };
 
     return NextResponse.json(
-      categoriesData.map((c: any) => ({
+      categoriesData.map((c: { category: string; count: number }) => ({
         value: c.category,
         label: labels[c.category] || c.category,
         count: c.count,

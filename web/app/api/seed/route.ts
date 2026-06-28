@@ -3,12 +3,7 @@ import { prisma } from '@/lib/prisma';
 
 // Helper functions
 /** Calculate price with minor randomization */
-function randomizePrice(basePrice: number): number {
-  const variation = (Math.random() * 0.2 - 0.1); // +/- 10%
-  let finalPrice = basePrice * (1 + variation);
-  finalPrice = Math.round(finalPrice / 500) * 500;
-  return finalPrice;
-}
+// Removed unused randomizePrice function
 
 function randPrice(min: number, max: number): number {
   const raw = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -545,7 +540,6 @@ const serviceTemplates: ServiceTemplate[] = [
    // console.log(`✅ Created ${createdClinics.length} clinics`);
 
    // console.log('💊 Seeding services...');
-  let totalServices = 0;
 
   for (const clinic of createdClinics) {
     const allowedCategories = getCategoriesForClinic(clinic.name);
@@ -560,34 +554,25 @@ const serviceTemplates: ServiceTemplate[] = [
     const selectedTemplates = pickRandom(availableTemplates, minCount, maxCount);
 
     const serviceData = selectedTemplates.map(([title, category, priceMin, priceMax]) => {
-      const price = randPrice(priceMin, priceMax);
-      const oldPrice = maybeOldPrice(price);
       return {
         title,
         category,
-        price,
-        oldPrice,
+        price: randPrice(priceMin, priceMax),
+        oldPrice: maybeOldPrice(randPrice(priceMin, priceMax)),
         clinicId: clinic.id,
       };
     });
 
+
     await prisma.service.createMany({ data: serviceData });
-    totalServices += serviceData.length;
   }
 
    // console.log(`✅ Created ${totalServices} services across ${createdClinics.length} clinics`);
 
-  // Print summary by category
-  const categoryCounts = await prisma.service.groupBy({
-    by: ['category'],
-    _count: { id: true },
-    orderBy: { _count: { id: 'desc' } },
-  });
+
 
    // console.log('\n📊 Services by category:');
-  for (const cat of categoryCounts) {
-     // console.log(`   ${cat.category}: ${cat._count.id}`);
-  }
+
 
     return NextResponse.json({ success: true, message: 'Database seeded successfully' });
   } catch (error: unknown) {
