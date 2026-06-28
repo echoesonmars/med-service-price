@@ -46,28 +46,54 @@ class InvitroScraper(BaseScraper):
         """Extract services from analysis cards"""
         services = []
         
-        # Look for analysis cards
+        # Look for the new 'analyzes-item' class used by invitro.kz
+        items = soup.select(".analyzes-item")
+        
+        if items:
+            for item in items:
+                title_elem = item.select_one(".analyzes-item__title")
+                price_elem = item.select_one(".analyzes-item__total--price")
+                category = "Лабораторная диагностика" # Default category
+                
+                # Check category from the preceding subtitle section
+                section = item.find_previous(class_="item_section_card")
+                if section:
+                    subtitle = section.find_previous(class_="result-list__subtitle")
+                    if subtitle:
+                        category = subtitle.get_text(strip=True)
+                
+                if title_elem and price_elem:
+                    title = title_elem.get_text(strip=True)
+                    price_text = price_elem.get_text(strip=True)
+                    
+                    price_match = re.search(r'(\d[\d\s]*\d|\d+)', price_text)
+                    if price_match and title:
+                        price = int(price_match.group(1).replace(" ", ""))
+                        services.append({
+                            "title": title,
+                            "price": price,
+                            "category": category,
+                        })
+            return services
+            
+        # Fallback for old layouts
         cards = soup.find_all(["div", "article"], class_=re.compile(r"analysis|service|price-item", re.I))
         
         for card in cards:
-            # Try to find title
             title_elem = card.find(["h3", "h4", "h5", "a", "span"], class_=re.compile(r"title|name|analysis", re.I))
             if not title_elem:
                 title_elem = card.find("a")
             
-            # Try to find price
             price_elem = card.find(["span", "div", "p"], class_=re.compile(r"price|cost|summ", re.I))
             
             if title_elem and price_elem:
                 title = title_elem.get_text(strip=True)
                 price_text = price_elem.get_text(strip=True)
                 
-                # Extract numeric price
                 price_match = re.search(r'(\d[\d\s]*\d|\d+)', price_text)
                 if price_match and title:
                     price = int(price_match.group(1).replace(" ", ""))
                     
-                    # Try to find category
                     category = "Лабораторная диагностика"
                     category_elem = card.find(["span", "div"], class_=re.compile(r"category|type", re.I))
                     if category_elem:
