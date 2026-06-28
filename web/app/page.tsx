@@ -89,14 +89,16 @@ export default function Home() {
   const [searchType, setSearchType] = useState("Мед услуги");
   const [activeMode, setActiveMode] = useState<"search" | "chat">("search");
   const [showCompare, setShowCompare] = useState(false);
+  const [semanticSearch, setSemanticSearch] = useState(false);
 
   // Fetch services from API
   const fetchServices = useCallback(
-    async (query: string, filter: string, category: string) => {
+    async (query: string, filter: string, category: string, useSemantic: boolean) => {
       try {
         const params = new URLSearchParams();
         if (query) params.set("q", query);
         if (category && category !== "all") params.set("category", category);
+        if (useSemantic) params.set("semantic", "true");
 
         // Map filter to sort parameter
         switch (filter) {
@@ -198,7 +200,7 @@ export default function Home() {
           JSON.stringify(updatedHistory),
         );
 
-        fetchServices(query, "all", "all").then(() => {
+        fetchServices(query, "all", "all", false).then(() => {
           setSearchState("done");
         });
       }
@@ -243,7 +245,7 @@ export default function Home() {
       setSearchState("done");
     } else {
       setActiveMode("search");
-      await fetchServices(queryText, activeFilter, activeCategory);
+      await fetchServices(queryText, activeFilter, activeCategory, semanticSearch);
       setSearchState("done");
     }
 
@@ -255,12 +257,12 @@ export default function Home() {
     }
   };
 
-  // Re-fetch when filter or category changes
+  // Re-fetch when filter, category, or semantic search changes
   useEffect(() => {
     if (searchState === "done" && activeMode === "search" && searchQuery) {
-      fetchServices(searchQuery, activeFilter, activeCategory);
+      fetchServices(searchQuery, activeFilter, activeCategory, semanticSearch);
     }
-  }, [activeFilter, activeCategory, searchState, activeMode, searchQuery, fetchServices]);
+  }, [activeFilter, activeCategory, semanticSearch, searchState, activeMode, searchQuery, fetchServices]);
 
   const clearHistory = () => {
     saveHistory([]);
@@ -388,6 +390,8 @@ export default function Home() {
                       activeCategory={activeCategory}
                       onCategoryChange={setActiveCategory}
                       categories={categories}
+                      semanticSearch={semanticSearch}
+                      onSemanticSearchChange={setSemanticSearch}
                     />
                   </div>
                 </div>

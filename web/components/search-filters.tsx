@@ -1,6 +1,6 @@
 "use client";
 
-import { FaSortAmountDown, FaSortAmountUp, FaMapMarkerAlt, FaStar, FaClock, FaFilter } from "react-icons/fa";
+import { FaSortAmountDown, FaSortAmountUp, FaStar, FaFilter, FaBrain } from "react-icons/fa";
 import { cn } from "@/lib/utils";
 import { CategoryCount } from "@/types/search";
 
@@ -10,6 +10,8 @@ interface SearchFiltersProps {
   activeCategory: string;
   onCategoryChange: (category: string) => void;
   categories: CategoryCount[];
+  semanticSearch?: boolean;
+  onSemanticSearchChange?: (enabled: boolean) => void;
 }
 
 export function SearchFilters({
@@ -18,6 +20,8 @@ export function SearchFilters({
   activeCategory,
   onCategoryChange,
   categories,
+  semanticSearch = false,
+  onSemanticSearchChange,
 }: SearchFiltersProps) {
   const sortFilters = [
     { id: "all", label: "Все", icon: null },
@@ -28,6 +32,33 @@ export function SearchFilters({
 
   return (
     <div className="space-y-2">
+      {/* Semantic search toggle */}
+      {onSemanticSearchChange && (
+        <div className="flex items-center gap-2 pb-1">
+          <button
+            onClick={() => onSemanticSearchChange(!semanticSearch)}
+            className={cn(
+              "h-7 px-3 rounded-full text-[11px] font-heading font-semibold transition-all duration-300 flex items-center gap-1.5 cursor-pointer border outline-none",
+              semanticSearch
+                ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white border-purple-500 shadow-[0_2px_12px_rgba(168,85,247,0.4)]"
+                : "bg-background text-foreground border-border hover:bg-zinc-100 dark:hover:bg-zinc-800",
+            )}
+            title="Семантический поиск использует искусственный интеллект для понимания смысла запроса"
+          >
+            <FaBrain className="size-3" />
+            <span>Умный поиск</span>
+            {semanticSearch && (
+              <span className="inline-flex items-center justify-center size-1.5 bg-white/90 rounded-full animate-pulse" />
+            )}
+          </button>
+          {semanticSearch && (
+            <span className="text-[9px] text-muted-foreground font-heading">
+              Поиск по смыслу запроса
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Sort filters */}
       <div className="flex flex-wrap items-center gap-1.5 w-full">
         {sortFilters.map((filter) => {
