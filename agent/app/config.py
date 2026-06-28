@@ -15,7 +15,6 @@ class Settings(BaseSettings):
     
     # LLM API Keys
     google_api_key: str = ""
-    openai_api_key: str = ""
     
     # Embeddings
     embedding_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
@@ -27,12 +26,13 @@ class Settings(BaseSettings):
     scraping_timeout: int = 30
     
     # Normalization
-    llm_provider: str = "google"  # google or openai
+    llm_provider: str = "google"
     llm_model: str = "gemini-2.0-flash-exp"
     
     class Config:
         env_file = ".env"
         case_sensitive = False
+        extra = "ignore"
 
 
 @lru_cache()

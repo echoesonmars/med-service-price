@@ -14,7 +14,8 @@ export async function GET(req: NextRequest) {
     const offset = parseInt(searchParams.get("offset") || "0");
 
     // Build where conditions
-    const whereConditions: Parameters<typeof prisma.service.findMany>[0]["where"] = {
+    type ServiceWhereInput = NonNullable<Parameters<typeof prisma.service.findMany>[0]>['where'];
+    const whereConditions: ServiceWhereInput = {
       clinic: {
         city: city,
       },
@@ -44,7 +45,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Determine sort order
-    type ServiceOrderBy = Parameters<typeof prisma.service.findMany>[0]["orderBy"];
+    type ServiceOrderBy = NonNullable<Parameters<typeof prisma.service.findMany>[0]>['orderBy'];
     let orderBy: ServiceOrderBy;
     switch (sortBy) {
       case "price_asc":

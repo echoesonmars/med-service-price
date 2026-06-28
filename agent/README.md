@@ -48,7 +48,7 @@
 - BeautifulSoup4 (HTML parsing)
 - openpyxl (Excel parsing)
 - PyPDF2 (PDF parsing)
-- Google Gemini / OpenAI (LLM normalization)
+- Google Gemini (LLM normalization)
 - Sentence Transformers (embeddings)
 
 ## Установка

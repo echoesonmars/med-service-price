@@ -69,7 +69,6 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
       GOOGLE_API_KEY: ${GOOGLE_API_KEY}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
       EMBEDDING_MODEL: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
       SIMILARITY_THRESHOLD: 0.92
       USER_AGENT: MedServicePrice-Bot/1.0
@@ -96,7 +95,6 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
       GOOGLE_API_KEY: ${GOOGLE_API_KEY}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
     depends_on:
       postgres:
         condition: service_healthy
@@ -122,14 +120,14 @@ services:
         condition: service_healthy
     command: celery -A app.main flower --port=5555
 
-  # Web Frontend (optional - if running separately)
+  # Web Frontend
   web:
     build:
       context: ./web
       dockerfile: Dockerfile
     container_name: medserviceprice-web
     environment:
-      DATABASE_URL: file:./prisma/dev.db
+      DATABASE_URL: file:/app/prisma/dev.db
       NEXT_PUBLIC_API_URL: http://backend:8000
     ports:
       - "3000:3000"
